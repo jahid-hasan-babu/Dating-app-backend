@@ -20,8 +20,10 @@ router.post(
 router.post(
   '/verify-otp',
   validateRequest(authValidation.otpValidationSchema),
-  AuthControllers.verifyOtpAndResetPassword,
+  AuthControllers.verifyOtp,
 );
+
+router.post('/reset-password', AuthControllers.resetPassword);
 
 router.post('/facebook', AuthControllers.facebookLogin);
 router.post('/google', AuthControllers.googleLogin);

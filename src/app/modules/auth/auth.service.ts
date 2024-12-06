@@ -69,11 +69,7 @@ const createOtp = async (payload: { email: string }) => {
   return { otpData };
 };
 
-const verifyOtpAndResetPassword = async (payload: {
-  email: string;
-  otp: number;
-  password: string;
-}) => {
+const verifyOtp = async (payload: { email: string; otp: number }) => {
   // Check if the user exists
   const userData = await prisma.user.findUniqueOrThrow({
     where: {
@@ -96,11 +92,33 @@ const verifyOtpAndResetPassword = async (payload: {
     throw new AppError(httpStatus.BAD_REQUEST, 'Invalid OTP');
   }
 
+  // Remove the OTP after successful verification
+  await prisma.otp.delete({
+    where: {
+      email: payload.email,
+    },
+  });
+
+  return { message: 'OTP verified  successfully' };
+};
+
+const resetPassword = async (payload: { email: string; password: string }) => {
+  // Check if the user exists
+  const userData = await prisma.user.findUniqueOrThrow({
+    where: {
+      email: payload.email,
+    },
+  });
+
+  if (!userData) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'User not found');
+  }
+
   // Hash the new password
   const hashedPassword = await bcrypt.hash(payload.password, 12);
 
-  // Update the user's password in the database
-  await prisma.user.update({
+  // Update the user's password
+  const updatedUser = await prisma.user.update({
     where: {
       email: payload.email,
     },
@@ -109,17 +127,10 @@ const verifyOtpAndResetPassword = async (payload: {
     },
   });
 
-  // Remove the OTP after successful verification
-  await prisma.otp.delete({
-    where: {
-      email: payload.email,
-    },
-  });
-
-  return { message: 'OTP verified and password reset successfully' };
+  return updatedUser;
 };
 
-export const AuthServices = { loginUser, createOtp, verifyOtpAndResetPassword };
+export const AuthServices = { loginUser, createOtp, verifyOtp, resetPassword };
 
 
 

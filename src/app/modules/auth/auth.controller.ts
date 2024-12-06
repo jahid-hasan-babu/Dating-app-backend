@@ -24,11 +24,20 @@ const createOtp = catchAsync(async (req, res) => {
   });
 });
 
-const verifyOtpAndResetPassword = catchAsync(async (req, res) => {
-  const result = await AuthServices.verifyOtpAndResetPassword(req.body);
+const verifyOtp = catchAsync(async (req, res) => {
+  const result = await AuthServices.verifyOtp(req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     message: 'OTP verified successfully',
+    data: result,
+  });
+});
+
+const resetPassword = catchAsync(async (req, res) => {
+  const result = await AuthServices.resetPassword(req.body);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: 'Password reset successfully',
     data: result,
   });
 });
@@ -56,5 +65,6 @@ export const AuthControllers = {
   facebookLogin,
   googleLogin,
   createOtp,
-  verifyOtpAndResetPassword,
+  verifyOtp,
+  resetPassword,
 };

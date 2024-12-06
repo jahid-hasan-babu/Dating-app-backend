@@ -93,21 +93,42 @@ const registerUser = async (payload: any) => {
 };
 
 
-// const getAllUsersFromDB = async () => {
-//   const result = await prisma.user.findMany({
-//     select: {
-//       id: true,
-//       name: true,
-//       email: true,
-//       role: true,
-//       status: true,
-//       createdAt: true,
-//       updatedAt: true,
-//     },
-//   });
+const getAllUsers = async () => {
+  const result = await prisma.profile.findMany({
+    select: {
+      id: true,
+      userId: true,
+      fullName: true,
+      username: true,
+      phoneNumber: true,
+      profileImage: true,
+      locationLat: true,
+      locationLang: true,
+      country: true,
+      gender: true,
+      dateOfBirth: true,
+      height: true,
+      interests: true,
+      about: true,
+      relationship: true,
+      language: true,
+      work: true,
+      gallery: true,
+      user: {
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+    },
+  });
 
-//   return result;
-// };
+  return result;
+};
 
 // const getMyProfileFromDB = async (id: string) => {
 //   const Profile = await prisma.user.findUniqueOrThrow({
@@ -269,4 +290,5 @@ const registerUser = async (payload: any) => {
 // };
 export const UserServices = {
   registerUser,
+  getAllUsers,
 };
