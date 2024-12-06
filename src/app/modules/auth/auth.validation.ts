@@ -26,4 +26,16 @@ const emailValidationSchema = z.object({
   }),
 });
 
-export const authValidation = { loginUser, emailValidationSchema };
+const otpValidationSchema = z.object({
+  body: z.object({
+    otp: z.number({
+      required_error: 'OTP is required!',
+    }),
+  }),
+});
+
+export const authValidation = {
+  loginUser,
+  emailValidationSchema,
+  otpValidationSchema,
+};

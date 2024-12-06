@@ -5,6 +5,7 @@ import { AuthServices } from './auth.service';
 import facebook from './auth.facebook';
 import google from './auth.google';
 
+
 const loginUser = catchAsync(async (req, res) => {
   const result = await AuthServices.loginUser(req.body);
   sendResponse(res, {
@@ -18,7 +19,16 @@ const createOtp = catchAsync(async (req, res) => {
   const result = await AuthServices.createOtp(req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
-    message: '6 Digit otp sent successfully',
+    message: '6 Digit otp sent to your email',
+    data: result,
+  });
+});
+
+const verifyOtpAndResetPassword = catchAsync(async (req, res) => {
+  const result = await AuthServices.verifyOtpAndResetPassword(req.body);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: 'OTP verified successfully',
     data: result,
   });
 });
@@ -46,4 +56,5 @@ export const AuthControllers = {
   facebookLogin,
   googleLogin,
   createOtp,
+  verifyOtpAndResetPassword,
 };

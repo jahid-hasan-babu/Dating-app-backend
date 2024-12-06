@@ -12,9 +12,15 @@ router.post(
 );
 
 router.post(
-  '/create-otp',
+  '/forget-password',
   validateRequest(authValidation.emailValidationSchema),
   AuthControllers.createOtp,
+);
+
+router.post(
+  '/verify-otp',
+  validateRequest(authValidation.otpValidationSchema),
+  AuthControllers.verifyOtpAndResetPassword,
 );
 
 router.post('/facebook', AuthControllers.facebookLogin);

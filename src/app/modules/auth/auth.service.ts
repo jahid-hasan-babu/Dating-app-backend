@@ -60,18 +60,73 @@ const createOtp = async (payload: { email: string }) => {
   // Send email
   await sentEmailUtility(payload.email, EmailSubject, EmailText);
 
-  // Upsert OTP
+  // Set expiration time to 5 minutes from now
+  const expirationTime = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiration
+
+  // Upsert OTP with expiration time
   const otpData = await prisma.otp.upsert({
     where: { email: payload.email },
-    update: { otp },
-    create: { email: payload.email, otp },
+    update: { otp, expiresAt: expirationTime },
+    create: { email: payload.email, otp, expiresAt: expirationTime },
   });
 
   return {
     otpData,
+    message: 'OTP has been sent and will expire in 5 minutes.',
   };
 };
-export const AuthServices = { loginUser, createOtp };
+
+const verifyOtpAndResetPassword = async (payload: {
+  email: string;
+  otp: number;
+  password: string;
+}) => {
+  // Check if the user exists
+  const userData = await prisma.user.findUniqueOrThrow({
+    where: {
+      email: payload.email,
+    },
+  });
+
+  if (!userData) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'User not found');
+  }
+
+  // Check if the OTP is valid
+  const otpData = await prisma.otp.findUniqueOrThrow({
+    where: {
+      email: payload.email,
+    },
+  });
+
+  if (otpData.otp !== payload.otp) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid OTP');
+  }
+
+  // Hash the new password
+  const hashedPassword = await bcrypt.hash(payload.password, 12);
+
+  // Update the user's password in the database
+  await prisma.user.update({
+    where: {
+      email: payload.email,
+    },
+    data: {
+      password: hashedPassword,
+    },
+  });
+
+  // Remove the OTP after successful verification
+  await prisma.otp.delete({
+    where: {
+      email: payload.email,
+    },
+  });
+
+  return { message: 'OTP verified and password reset successfully' };
+};
+
+export const AuthServices = { loginUser, createOtp, verifyOtpAndResetPassword };
 
 
 
