@@ -2,6 +2,7 @@ import httpStatus from 'http-status';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { ProfileServices } from './profile.service';
+import { Request, Response } from 'express';
 
 const registerProfile = catchAsync(async (req, res) => {
   const result = await ProfileServices.registerProfile(req.body);
@@ -12,8 +13,8 @@ const registerProfile = catchAsync(async (req, res) => {
   });
 });
 
-const getAllProfiles = catchAsync(async (req, res) => {
-  const result = await ProfileServices.getAllProfiles();
+const getAllProfiles = catchAsync(async (req: Request, res: Response) => {
+  const result = await ProfileServices.getAllProfiles(req);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     message: 'Profile Retrieve successfully',

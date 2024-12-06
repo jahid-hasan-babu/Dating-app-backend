@@ -1,5 +1,7 @@
 import { Prisma } from '@prisma/client';
 import prisma from '../../utils/prisma';
+import { Request } from 'express';
+import { searchFilter } from '../../utils/searchFilter';
 
 const registerProfile = async (payload: any) => {
   try {
@@ -25,8 +27,12 @@ const registerProfile = async (payload: any) => {
   }
 };
 
-const getAllProfiles = async () => {
-  const result = await prisma.profile.findMany({});
+const getAllProfiles = async (req: Request) => {
+  const { search } = req.query;
+  const searchFilters = search ? searchFilter(search as string) : {};
+  const result = await prisma.profile.findMany({
+    where: searchFilters,
+  });
   return result;
 };
 
@@ -66,34 +72,23 @@ const deleteProfile = async (userId: string) => {
   return;
 };
 
-// search profile by country and city
-// const searchProfile = async (country: string, city: string) => {
+// const searchProfile = async (searchKey: string) => {
+//   // Build the dynamic where clause for country and city
+//   const whereClause: Prisma.ProfileWhereInput = {
+//     OR: [
+//       { country: { contains: searchKey, mode: 'insensitive' } },
+//       { city: { contains: searchKey, mode: 'insensitive' } },
+//     ],
+//   };
+
+//   // Perform the query
 //   const result = await prisma.profile.findMany({
-//     where: {
-//       country: country,
-//       city: city,
-//     },
+//     where: whereClause,
 //   });
-//   return result;
+
+//   // Return the result
+//   return { status: 'success', data: result };
 // };
-
-const searchProfile = async (searchKey: string) => {
-  // Build the dynamic where clause for country and city
-  const whereClause: Prisma.ProfileWhereInput = {
-    OR: [
-      { country: { contains: searchKey, mode: 'insensitive' } },
-      { city: { contains: searchKey, mode: 'insensitive' } },
-    ],
-  };
-
-  // Perform the query
-  const result = await prisma.profile.findMany({
-    where: whereClause,
-  });
-
-  // Return the result
-  return { status: 'success', data: result };
-};
 
 export const ProfileServices = {
   registerProfile,
@@ -101,5 +96,4 @@ export const ProfileServices = {
   getSingleProfile,
   updateProfile,
   deleteProfile,
-  searchProfile,
 };
