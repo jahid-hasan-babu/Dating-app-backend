@@ -12,7 +12,7 @@ router.post(
   UserControllers.registerUser,
 );
 
-// router.get('/', UserControllers.getAllUsers);
+router.get('/', UserControllers.getAllUsers);
 
 // router.get('/me', auth('USER', 'ADMIN'), UserControllers.getMyProfile);
 

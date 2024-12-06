@@ -92,6 +92,7 @@ const registerUser = async (payload: any) => {
   }
 };
 
+
 // const getAllUsersFromDB = async () => {
 //   const result = await prisma.user.findMany({
 //     select: {

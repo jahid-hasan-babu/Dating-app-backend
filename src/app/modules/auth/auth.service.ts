@@ -39,12 +39,11 @@ const loginUser = async (payload: { email: string; password: string }) => {
   };
 };
 
+
 const createOtp = async (payload: { email: string }) => {
   // Check if the user exists
-  const userData = await prisma.user.findUniqueOrThrow({
-    where: {
-      email: payload.email,
-    },
+  const userData = await prisma.user.findUnique({
+    where: { email: payload.email },
   });
 
   if (!userData) {
@@ -54,26 +53,20 @@ const createOtp = async (payload: { email: string }) => {
   // Generate OTP
   const otp = Math.floor(100000 + Math.random() * 900000);
 
-  const EmailSubject = 'OTP Verification';
-  const EmailText = `Your OTP is = ${otp}`;
+  const emailSubject = 'OTP Verification';
+  const emailText = `Your OTP is: ${otp}`;
 
   // Send email
-  await sentEmailUtility(payload.email, EmailSubject, EmailText);
+  await sentEmailUtility(payload.email, emailSubject, emailText);
 
-  // Set expiration time to 5 minutes from now
-  const expirationTime = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiration
-
-  // Upsert OTP with expiration time
+  // Upsert OTP (no expiration logic)
   const otpData = await prisma.otp.upsert({
     where: { email: payload.email },
-    update: { otp, expiresAt: expirationTime },
-    create: { email: payload.email, otp, expiresAt: expirationTime },
+    update: { otp },
+    create: { email: payload.email, otp },
   });
 
-  return {
-    otpData,
-    message: 'OTP has been sent and will expire in 5 minutes.',
-  };
+  return { otpData };
 };
 
 const verifyOtpAndResetPassword = async (payload: {
