@@ -14,6 +14,15 @@ const loginUser = catchAsync(async (req, res) => {
   });
 });
 
+const createOtp = catchAsync(async (req, res) => {
+  const result = await AuthServices.createOtp(req.body);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: '6 Digit otp sent successfully',
+    data: result,
+  });
+});
+
 const facebookLogin = catchAsync(async (req, res) => {
   const result = await facebook.authenticate(req.body);
   sendResponse(res, {
@@ -32,4 +41,9 @@ const googleLogin = catchAsync(async (req, res) => {
   });
 });
 
-export const AuthControllers = { loginUser, facebookLogin, googleLogin };
+export const AuthControllers = {
+  loginUser,
+  facebookLogin,
+  googleLogin,
+  createOtp,
+};

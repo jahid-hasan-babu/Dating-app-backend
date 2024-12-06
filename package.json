@@ -43,6 +43,8 @@
     "express": "^4.19.2",
     "http-status": "^1.7.4",
     "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.9.16",
+    "nodemailer-smtp-transport": "^2.7.4",
     "passport": "^0.7.0",
     "passport-facebook": "^3.0.0",
     "passport-google-oauth": "^2.0.0",

@@ -11,6 +11,12 @@ router.post(
   AuthControllers.loginUser,
 );
 
+router.post(
+  '/create-otp',
+  validateRequest(authValidation.emailValidationSchema),
+  AuthControllers.createOtp,
+);
+
 router.post('/facebook', AuthControllers.facebookLogin);
 router.post('/google', AuthControllers.googleLogin);
 
