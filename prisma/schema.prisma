@@ -38,15 +38,16 @@ model Otp {
 model Profile {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  fullName     String?
+  firstName    String
   username     String?
   phoneNumber  String?
   profileImage String?
   locationLat  String?
   locationLang String?
-  country      String?
-  gender       GenderStatus?
-  dateOfBirth  String?
+  country      String
+  city         String
+  gender       GenderStatus
+  dateOfBirth  String
   height       String?
   interests    Json[]
   about        String?

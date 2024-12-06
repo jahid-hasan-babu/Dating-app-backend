@@ -11,6 +11,9 @@ const registerUser = z.object({
     password: z.string({
       required_error: 'Password is required!',
     }),
+    userId: z.string({
+      required_error: 'User Id is required!',
+    }),
   }),
 });
 
