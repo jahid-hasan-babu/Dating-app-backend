@@ -6,18 +6,15 @@ import AppError from '../../errors/AppError';
 import { generateToken } from '../../utils/generateToken';
 import prisma from '../../utils/prisma';
 
-const loginUserFromDB = async (payload: {
-  email: string;
-  password: string;
-}) => {
+const loginUser = async (payload: { email: string; password: string }) => {
   const userData = await prisma.user.findUniqueOrThrow({
     where: {
       email: payload.email,
     },
   });
-  const isCorrectPassword: Boolean = await bcrypt.compare(
+  const isCorrectPassword = await bcrypt.compare(
     payload.password,
-    userData.password,
+    userData.password as string,
   );
 
   if (!isCorrectPassword) {
@@ -27,8 +24,7 @@ const loginUserFromDB = async (payload: {
   const accessToken = await generateToken(
     {
       id: userData.id,
-      name: userData.name,
-      email: userData.email,
+      email: userData.email as string,
       role: userData.role,
     },
     config.jwt.access_secret as Secret,
@@ -36,11 +32,13 @@ const loginUserFromDB = async (payload: {
   );
   return {
     id: userData.id,
-    name: userData.name,
     email: userData.email,
     role: userData.role,
     accessToken: accessToken,
   };
 };
 
-export const AuthServices = { loginUserFromDB };
+export const AuthServices = { loginUser };
+
+
+

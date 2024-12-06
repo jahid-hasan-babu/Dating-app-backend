@@ -3,6 +3,7 @@ import auth from '../../middlewares/auth';
 import validateRequest from '../../middlewares/validateRequest';
 import { UserControllers } from './user.controller';
 import { UserValidations } from './user.validation';
+
 const router = express.Router();
 
 router.post(
@@ -11,27 +12,27 @@ router.post(
   UserControllers.registerUser,
 );
 
-router.get('/', UserControllers.getAllUsers);
+// router.get('/', UserControllers.getAllUsers);
 
-router.get('/me', auth('USER', 'ADMIN'), UserControllers.getMyProfile);
+// router.get('/me', auth('USER', 'ADMIN'), UserControllers.getMyProfile);
 
-router.get('/:id', UserControllers.getUserDetails);
-router.put(
-  '/update-profile',
-  auth('USER', 'ADMIN'),
-  UserControllers.updateMyProfile,
-);
+// router.get('/:id', UserControllers.getUserDetails);
+// router.put(
+//   '/update-profile',
+//   auth('USER', 'ADMIN'),
+//   UserControllers.updateMyProfile,
+// );
 
-router.put(
-  '/update-user/:id',
-  auth('ADMIN'),
-  UserControllers.updateUserRoleStatus,
-);
+// router.put(
+//   '/update-user/:id',
+//   auth('ADMIN'),
+//   UserControllers.updateUserRoleStatus,
+// );
 
-router.post(
-  '/change-password',
-  auth('USER', 'ADMIN'),
-  UserControllers.changePassword,
-);
+// router.post(
+//   '/change-password',
+//   auth('USER', 'ADMIN'),
+//   UserControllers.changePassword,
+// );
 
 export const UserRouters = router;

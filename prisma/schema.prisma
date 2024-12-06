@@ -6,44 +6,70 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id           String       @id @default(uuid()) 
-  name         String
-  email        String       @unique
-  password     String
-  role         UserRoleEnum @default(USER)
-  status       UserStatus   @default(ACTIVATE)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  profile  Profile?
+  id         String       @id @default(auto()) @map("_id") @db.ObjectId
+  email      String?      @unique
+  password   String?
+  role       UserRoleEnum @default(USER)
+  status     UserStatus   @default(ACTIVATE)
+  googleId   String?      @unique
+  facebookId String?      @unique
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  profile    Profile?
 
   @@map("users")
 }
 
 model Profile {
-  id               String   @id @default(uuid())
-  userId           String   @unique
-  bio              String?
-  age              Int
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  user User @relation(fields: [userId], references: [id])
+  fullName     String?
+  username     String?
+  phoneNumber  String?
+  profileImage String?
+  locationLat  String?
+  locationLang String?
+  country      String?
+  gender       GenderStatus?
+  dateOfBirth  String?
+  height       String?
+  interests    Json[]
+  about        String?
+  relationship RelationStatus?
+  language     String?
+  work         String?
+  gallery      Json[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  user   User  @relation(fields: [userId], references: [id])
+  userId String @unique @db.ObjectId
+
+  @@map("profiles")
 }
-
 
 enum UserRoleEnum {
   USER
   ADMIN
-  SUPERADMIN
 }
 
 enum UserStatus {
   ACTIVATE
   INACTIVATE
   BLOCKED
+}
+
+enum GenderStatus {
+  MALE
+  FEMALE
+}
+
+enum RelationStatus {
+  SINGLE
+  MARRIED
 }

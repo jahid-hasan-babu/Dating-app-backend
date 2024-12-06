@@ -4,8 +4,7 @@ import sendResponse from '../../utils/sendResponse';
 import catchAsync from '../../utils/catchAsync';
 
 const registerUser = catchAsync(async (req, res) => {
-  const result = await UserServices.registerUserIntoDB(req.body);
-
+  const result = await UserServices.registerUser(req.body);
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     message: 'User registered successfully',
