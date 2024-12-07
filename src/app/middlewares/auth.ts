@@ -1,18 +1,29 @@
-import { NextFunction, Request, Response } from 'express';
 import httpStatus from 'http-status';
-import { Secret } from 'jsonwebtoken';
-import config from '../../config';
 import AppError from '../errors/AppError';
 import prisma from '../utils/prisma';
+import config from '../../config';
+import { Secret } from 'jsonwebtoken';
 import { verifyToken } from '../utils/verifyToken';
+import { Request, Response, NextFunction } from 'express';
 
 const auth = (...roles: string[]) => {
   return async (req: Request, _res: Response, next: NextFunction) => {
     try {
-      const token = req.headers.authorization;
+      const authHeader = req.headers.authorization; // Check the `Authorization` header
 
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        throw new AppError(
+          httpStatus.UNAUTHORIZED,
+          'Authorization token is missing or invalid!',
+        );
+      }
+
+      const token = authHeader.split(' ')[1];
+      console.log(token, 'check from auth');
+
+      // Extract the token part
       if (!token) {
-        throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized!');
+        throw new AppError(httpStatus.UNAUTHORIZED, 'Token is missing!');
       }
 
       const verifyUserToken = verifyToken(
@@ -20,24 +31,24 @@ const auth = (...roles: string[]) => {
         config.jwt.access_secret as Secret,
       );
 
-      // Check user is exist
+      // Check if user exists in the database
       const user = await prisma.user.findUniqueOrThrow({
-        where: {
-          id: verifyUserToken.id,
-        },
+        where: { id: verifyUserToken.id },
       });
 
-      if (!user) {
-        throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized!');
+      req.user = {
+        id: verifyUserToken.id,
+        role: verifyUserToken.role,
+      };
+
+      // Validate roles, if any are specified
+      if (roles.length && !roles.includes(verifyUserToken.role)) {
+        throw new AppError(httpStatus.FORBIDDEN, 'Access forbidden!');
       }
 
-      req.user = verifyUserToken;
-      if (roles.length && !roles.includes(verifyUserToken.role)) {
-        throw new AppError(httpStatus.FORBIDDEN, 'Forbidden!');
-      }
-      next();
+      next(); // Proceed to the next middleware
     } catch (error) {
-      next(error);
+      next(error); // Pass error to the error handler
     }
   };
 };

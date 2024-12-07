@@ -23,6 +23,31 @@ const getSingleProfile = async (userId: string) => {
   return result;
 };
 
+const getMyProfile = async (userId: string) => {
+  const userInfo = await prisma.profile.findUnique({
+    where: {
+      userId: userId,
+    },
+    select: {
+      fullName: true,
+      username: true,
+      profileImage: true,
+      country: true,
+      language: true,
+      gender: true,
+      age: true,
+      height: true,
+      work: true,
+    },
+  });
+
+  if (!userInfo) {
+    throw new AppError(404, 'User info not found');
+  }
+
+  return userInfo; // Returns only fullName and userName
+};
+
 const updateProfile = async (userId: string, payload: any, req: Request) => {
   const files = req.file as any; // Ensure files are being passed from the request
   const profileInfo = await prisma.profile.findUnique({
@@ -89,11 +114,10 @@ const deleteProfile = async (userId: string) => {
   return;
 };
 
-
-
 export const ProfileServices = {
   getAllProfiles,
   getSingleProfile,
   updateProfile,
   deleteProfile,
+  getMyProfile,
 };

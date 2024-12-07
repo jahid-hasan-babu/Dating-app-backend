@@ -12,7 +12,7 @@ router.get(
 );
 
 router.get(
-  '/google/callback',
+  '/api/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/' }),
   SocialLoginController.googleCallback,
 );
