@@ -1,14 +1,13 @@
 import { Request, Response } from 'express';
-import { SocialLoginService } from './socialLogin.service';
 import httpStatus from 'http-status';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
+import { socialLoginService } from './socialLogin.service';
 
 // login all user form db googleCallbacks
 const googleLogin = catchAsync(
   async (req: Request & { user?: any }, res: Response) => {
-    const result = await SocialLoginService.googleLoginIntoDb(req.user);
-
+    const result = await socialLoginService.googleLoginIntoDb(req.user);
     sendResponse(res, {
       statusCode: httpStatus.OK,
       success: true,
@@ -19,7 +18,7 @@ const googleLogin = catchAsync(
 );
 
 export const googleCallback = async (req: Request, res: Response) => {
-  const token = await SocialLoginService.googleLoginIntoDb(req.user);
+  const token = await socialLoginService.googleLoginIntoDb(req.user);
   res.redirect(`http://localhost:5003/?token=${token}`);
 };
 

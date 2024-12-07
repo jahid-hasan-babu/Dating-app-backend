@@ -88,6 +88,6 @@ const googleLoginIntoDb = async (user: any) => {
 //     return token;
 //   }
 // };
-export const SocialLoginService = {
+export const socialLoginService = {
   googleLoginIntoDb,
 };
