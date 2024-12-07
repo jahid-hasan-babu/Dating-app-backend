@@ -1,8 +1,9 @@
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as FacebookStrategy } from 'passport-facebook';
-import dotenv from 'dotenv';
-import config from '../../config';
+import dotenv, { config } from 'dotenv';
+
+dotenv.config();
 
 // Google OAuth setup
 passport.use(

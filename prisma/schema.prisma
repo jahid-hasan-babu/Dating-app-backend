@@ -16,8 +16,9 @@ model User {
   password   String?
   role       UserRoleEnum @default(USER)
   status     UserStatus   @default(ACTIVATE)
-  googleId   String?      @unique
-  facebookId String?      @unique
+  isVerified veriedStatus @default(NEW)
+  googleId   String?
+  facebookId String?
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
   profile    Profile?
@@ -36,18 +37,17 @@ model Otp {
 }
 
 model Profile {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-
-  firstName    String
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  fullName     String?
   username     String?
   phoneNumber  String?
   profileImage String?
   locationLat  String?
   locationLang String?
-  country      String
-  city         String
-  gender       GenderStatus
-  dateOfBirth  String
+  country      String?
+  city         String?
+  gender       GenderStatus?
+  dateOfBirth  String?
   height       String?
   interests    Json[]
   about        String?
@@ -55,6 +55,7 @@ model Profile {
   language     String?
   work         String?
   gallery      Json[]
+  isVerified   veriedStatus    @default(NEW)
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
@@ -83,4 +84,9 @@ enum GenderStatus {
 enum RelationStatus {
   SINGLE
   MARRIED
+}
+
+enum veriedStatus {
+  NEW
+  VERIFIED
 }

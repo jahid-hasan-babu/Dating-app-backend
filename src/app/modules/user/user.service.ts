@@ -20,48 +20,84 @@ const registerUser = async (payload: any) => {
   // Hash the user's password
   const hashedPassword: string = await bcrypt.hash(payload.password, 12);
 
+  const userData = {
+    email: payload.email,
+    password: hashedPassword,
+  };
+
   try {
-    // Create the user
-    const user = await prisma.user.create({
-      data: {
-        email: payload.email,
-        password: hashedPassword,
-      },
+    // Use a transaction to ensure both user and profile are created together
+    const result = await prisma.$transaction(async (transactionClient: any) => {
+      // Create the user
+      const user = await transactionClient.user.create({
+        data: userData,
+      });
+
+      // Prepare profile data
+      const profileData = {
+        fullName: payload.fullName || null,
+        username: payload.username || null,
+        phoneNumber: payload.phoneNumber || null,
+        profileImage: payload.profileImage || null,
+        locationLat: payload.locationLat || null,
+        locationLang: payload.locationLang || null,
+        country: payload.country || null,
+        city: payload.city || null,
+        gender: payload.gender || null,
+        dateOfBirth: payload.dateOfBirth || null,
+        height: payload.height || null,
+        interests: payload.interests || [],
+        about: payload.about || null,
+        relationship: payload.relationship || null,
+        language: payload.language || null,
+        work: payload.work || null,
+        gallery: payload.gallery || [],
+
+        // Link profile to user using `connect`
+        user: {
+          connect: {
+            id: user.id,
+          },
+        },
+      };
+
+      // Create the profile
+      const profile = await transactionClient.profile.create({
+        data: profileData,
+      });
+
+      return { user, profile };
     });
 
-    // Retrieve user without the password
-    const userWithoutPassword = await prisma.user.findUniqueOrThrow({
+    // Return the user with profile after successful transaction
+    const userWithProfile = await prisma.user.findUniqueOrThrow({
       where: {
-        id: user.id,
+        id: result.user.id,
       },
-      select: {
-        id: true,
-        email: true,
-        status: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      include: { profile: true },
     });
 
-    return userWithoutPassword;
+    // Remove password before returning the user
+    const userWithOptionalPassword =
+      userWithProfile as UserWithOptionalPassword;
+    delete userWithOptionalPassword.password;
+
+    return userWithOptionalPassword;
   } catch (error: any) {
     throw new AppError(
       httpStatus.INTERNAL_SERVER_ERROR,
-      'Error registering user',
+      'Error creating user and profile',
       error,
     );
   }
 };
-
-
 
 const getAllUsers = async () => {
   const result = await prisma.profile.findMany({
     select: {
       id: true,
       userId: true,
-      fullName: true,
+      firstName: true,
       username: true,
       phoneNumber: true,
       profileImage: true,

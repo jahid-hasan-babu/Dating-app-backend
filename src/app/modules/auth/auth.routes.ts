@@ -25,8 +25,9 @@ router.post(
 
 router.post('/reset-password', AuthControllers.resetPassword);
 
-router.post('/facebook', AuthControllers.facebookLogin);
-router.post('/google', AuthControllers.googleLogin);
+router.get('/facebook', AuthControllers.facebookLogin);
+
+router.get('/google', AuthControllers.googleLogin);
 
 
 export const AuthRouters = router;

@@ -3,6 +3,7 @@ import { AuthRouters } from '../modules/auth/auth.routes';
 import { UserRouters } from '../modules/user/user.routes';
 import path from 'path';
 import { ProfileRouters } from '../modules/profiles/profile.routes';
+import { socialLoginRoutes } from '../modules/SocialLogin/socialLogin.route';
 
 const router = express.Router();
 
@@ -10,6 +11,10 @@ const moduleRoutes = [
   {
     path: '/auth',
     route: AuthRouters,
+  },
+  {
+    path: '/social',
+    route: socialLoginRoutes,
   },
   {
     path: '/users',

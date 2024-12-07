@@ -2,30 +2,32 @@ import { Prisma } from '@prisma/client';
 import prisma from '../../utils/prisma';
 import { Request } from 'express';
 import { searchFilter } from '../../utils/searchFilter';
+import httpStatus from 'http-status';
+import AppError from '../../errors/AppError';
 
-const registerProfile = async (payload: any) => {
-  try {
-    // Check if a profile already exists for the given userId
-    const existingProfile = await prisma.profile.findUnique({
-      where: {
-        userId: payload.userId,
-      },
-    });
+// const registerProfile = async (payload: any) => {
+//   try {
+//     // Check if a profile already exists for the given userId
+//     const existingProfile = await prisma.profile.findUnique({
+//       where: {
+//         userId: payload.userId,
+//       },
+//     });
 
-    if (existingProfile) {
-      throw new Error('A profile already exists for this user.');
-    }
+//     if (existingProfile) {
+//       throw new Error('A profile already exists for this user.');
+//     }
 
-    // Create the profile if no matching profile exists
-    const result = await prisma.profile.create({
-      data: payload,
-    });
+//     // Create the profile if no matching profile exists
+//     const result = await prisma.profile.create({
+//       data: payload,
+//     });
 
-    return result;
-  } catch (error: any) {
-    throw new Error(error.message || 'Error registering profile');
-  }
-};
+//     return result;
+//   } catch (error: any) {
+//     throw new Error(error.message || 'Error registering profile');
+//   }
+// };
 
 const getAllProfiles = async (req: Request) => {
   const { search } = req.query;
@@ -45,14 +47,54 @@ const getSingleProfile = async (userId: string) => {
   return result;
 };
 
-const updateProfile = async (userId: string, payload: any) => {
-  const result = await prisma.profile.update({
+const updateProfile = async (userId: string, payload: any, req: Request) => {
+  const files = req.file as any; // Ensure files are being passed from the request
+  const profileInfo = await prisma.profile.findUnique({
     where: {
       userId: userId,
     },
-    data: payload,
   });
-  return result;
+
+  if (!profileInfo) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+  }
+  console.log(payload);
+
+  const profileData = req.body?.bodyData
+    ? // Parse the 'user' JSON string if it's present
+      (() => {
+        try {
+          return JSON.parse(req.body.bodyData); // Parse the JSON string inside 'user'
+        } catch (error) {
+          throw new AppError(
+            httpStatus.BAD_REQUEST,
+            'Invalid JSON format in user data',
+          );
+        }
+      })()
+    : {}; // Default to an empty object if 'user' is not present
+
+  console.log(profileData); // To log the parsed profile data
+
+  const profileImage = files
+    ? `${process.env.backend_base_url}/uploads/${files.originalname}`
+    : profileInfo.profileImage;
+
+  const updatedProfile = await prisma.profile.update({
+    where: {
+      userId: userId,
+    },
+    data: {
+      ...profileData,
+      profileImage,
+    },
+  });
+
+  if (!updatedProfile) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'User update failed');
+  }
+
+  return updatedProfile;
 };
 
 const deleteProfile = async (userId: string) => {
@@ -63,7 +105,7 @@ const deleteProfile = async (userId: string) => {
   });
 
   // Delete the user associated with the same userId
-  const result = await prisma.user.delete({
+  await prisma.user.delete({
     where: {
       id: userId,
     },
@@ -72,26 +114,7 @@ const deleteProfile = async (userId: string) => {
   return;
 };
 
-// const searchProfile = async (searchKey: string) => {
-//   // Build the dynamic where clause for country and city
-//   const whereClause: Prisma.ProfileWhereInput = {
-//     OR: [
-//       { country: { contains: searchKey, mode: 'insensitive' } },
-//       { city: { contains: searchKey, mode: 'insensitive' } },
-//     ],
-//   };
-
-//   // Perform the query
-//   const result = await prisma.profile.findMany({
-//     where: whereClause,
-//   });
-
-//   // Return the result
-//   return { status: 'success', data: result };
-// };
-
 export const ProfileServices = {
-  registerProfile,
   getAllProfiles,
   getSingleProfile,
   updateProfile,

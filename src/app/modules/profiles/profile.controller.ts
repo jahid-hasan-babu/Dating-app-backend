@@ -4,14 +4,14 @@ import sendResponse from '../../utils/sendResponse';
 import { ProfileServices } from './profile.service';
 import { Request, Response } from 'express';
 
-const registerProfile = catchAsync(async (req, res) => {
-  const result = await ProfileServices.registerProfile(req.body);
-  sendResponse(res, {
-    statusCode: httpStatus.CREATED,
-    message: 'Profile Register successfully',
-    data: result,
-  });
-});
+// const registerProfile = catchAsync(async (req: Request, res: Response) => {
+//   const result = await ProfileServices.registerProfile(req.body);
+//   sendResponse(res, {
+//     statusCode: httpStatus.CREATED,
+//     message: 'Profile Register successfully',
+//     data: result,
+//   });
+// });
 
 const getAllProfiles = catchAsync(async (req: Request, res: Response) => {
   const result = await ProfileServices.getAllProfiles(req);
@@ -22,7 +22,7 @@ const getAllProfiles = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getSingleProfile = catchAsync(async (req, res) => {
+const getSingleProfile = catchAsync(async (req: Request, res: Response) => {
   const result = await ProfileServices.getSingleProfile(req.params.userId);
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -31,11 +31,13 @@ const getSingleProfile = catchAsync(async (req, res) => {
   });
 });
 
-const updateProfile = catchAsync(async (req, res) => {
+const updateProfile = catchAsync(async (req: Request, res: Response) => {
   const result = await ProfileServices.updateProfile(
-    req.params.userId,
-    req.body,
+    req.params.userId,  // userId from URL params
+    req.body,  // Payload from request body
+    req  // Request object (for handling files and other details)
   );
+
   sendResponse(res, {
     statusCode: httpStatus.OK,
     message: 'Profile updated successfully',
@@ -43,7 +45,7 @@ const updateProfile = catchAsync(async (req, res) => {
   });
 });
 
-const deleteProfile = catchAsync(async (req, res) => {
+const deleteProfile = catchAsync(async (req: Request, res: Response) => {
   const result = await ProfileServices.deleteProfile(req.params.userId);
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -52,20 +54,9 @@ const deleteProfile = catchAsync(async (req, res) => {
   });
 });
 
-const searchProfile = catchAsync(async (req, res) => {
-  const result = await ProfileServices.searchProfile(req.params.searchKey);
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    message: 'Profile Retrieve successfully',
-    data: result,
-  });
-});
-
 export const ProfileControllers = {
-  registerProfile,
   getAllProfiles,
   getSingleProfile,
   updateProfile,
   deleteProfile,
-  searchProfile,
 };
