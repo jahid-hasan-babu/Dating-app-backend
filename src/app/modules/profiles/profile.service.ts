@@ -5,30 +5,6 @@ import { searchFilter } from '../../utils/searchFilter';
 import httpStatus from 'http-status';
 import AppError from '../../errors/AppError';
 
-// const registerProfile = async (payload: any) => {
-//   try {
-//     // Check if a profile already exists for the given userId
-//     const existingProfile = await prisma.profile.findUnique({
-//       where: {
-//         userId: payload.userId,
-//       },
-//     });
-
-//     if (existingProfile) {
-//       throw new Error('A profile already exists for this user.');
-//     }
-
-//     // Create the profile if no matching profile exists
-//     const result = await prisma.profile.create({
-//       data: payload,
-//     });
-
-//     return result;
-//   } catch (error: any) {
-//     throw new Error(error.message || 'Error registering profile');
-//   }
-// };
-
 const getAllProfiles = async (req: Request) => {
   const { search } = req.query;
   const searchFilters = search ? searchFilter(search as string) : {};
@@ -58,7 +34,6 @@ const updateProfile = async (userId: string, payload: any, req: Request) => {
   if (!profileInfo) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found');
   }
-  console.log(payload);
 
   const profileData = req.body?.bodyData
     ? // Parse the 'user' JSON string if it's present
@@ -113,6 +88,8 @@ const deleteProfile = async (userId: string) => {
 
   return;
 };
+
+
 
 export const ProfileServices = {
   getAllProfiles,

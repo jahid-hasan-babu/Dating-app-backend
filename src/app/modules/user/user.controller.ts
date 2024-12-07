@@ -13,76 +13,19 @@ const registerUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getAllUsers = catchAsync(async (req: Request, res: Response) => {
-  const result = await UserServices.getAllUsers();
+const changePassword = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserServices.changePassword(
+    req.params.id, // userId from URL params
+    req.body,
+  );
   sendResponse(res, {
     statusCode: httpStatus.OK,
-    message: 'Profile Retrieve successfully',
+    message: 'Password changed successfully',
     data: result,
   });
 });
 
-// const getMyProfile = catchAsync(async (req: Request, res: Response) => {
-//   const id = req.user.id;
-//   const result = await UserServices.getMyProfileFromDB(id);
-
-//   sendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     message: 'Profile retrieved successfully',
-//     data: result,
-//   });
-// });
-
-// const getUserDetails = catchAsync(async (req: Request, res: Response) => {
-//   const { id } = req.params;
-//   const result = await UserServices.getUserDetailsFromDB(id);
-
-//   sendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     message: 'User details retrieved successfully',
-//     data: result,
-//   });
-// });
-
-// const updateMyProfile = catchAsync(async (req: Request, res: Response) => {
-//   const id = req.user.id;
-//   const result = await UserServices.updateMyProfileIntoDB(id, req.body);
-
-//   sendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     message: 'User profile updated successfully',
-//     data: result,
-//   });
-// });
-
-// const updateUserRoleStatus = catchAsync(async (req: Request, res: Response) => {
-//   const { id } = req.params;
-//   const result = await UserServices.updateUserRoleStatusIntoDB(id, req.body);
-
-//   sendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     message: 'User updated successfully',
-//     data: result,
-//   });
-// });
-
-// const changePassword = catchAsync(async (req: Request, res: Response) => {
-//   const user = req.user;
-//   const result = await UserServices.changePassword(user, req.body);
-
-//   sendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     message: 'Password changed successfully',
-//     data: result,
-//   });
-// });
-
 export const UserControllers = {
   registerUser,
-  getAllUsers,
-  // getMyProfile,
-  // getUserDetails,
-  // updateMyProfile,
-  // updateUserRoleStatus,
-  // changePassword,
+  changePassword,
 };
