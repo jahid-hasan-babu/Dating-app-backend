@@ -1,4 +1,4 @@
-# Server with Typescript, PostgreSQL, Prisma and zod validation
+# Server with Typescript, MongoDB, Prisma and zod validation
 
 ## How to run this project
 
