@@ -6,21 +6,14 @@ import { Request, Response } from 'express';
 
 import AppError from '../../errors/AppError';
 
-const getAllProfiles = catchAsync(
-  async (req: Request & { user?: any }, res: Response) => {
-    const userID = req.user.id;
-
-    if (!userID) {
-      throw new AppError(httpStatus.UNAUTHORIZED, 'User not authenticated');
-    }
-    const result = await ProfileServices.getAllProfiles(userID, req);
-    sendResponse(res, {
-      statusCode: httpStatus.OK,
-      message: 'Profile Retrieve successfully',
-      data: result,
-    });
-  },
-);
+const getAllProfiles = catchAsync(async (req: Request, res: Response) => {
+  const result = await ProfileServices.getAllProfiles(req);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: 'Profile Retrieve successfully',
+    data: result,
+  });
+});
 
 const getMyProfile = catchAsync(
   async (req: Request & { user?: any }, res: Response) => {

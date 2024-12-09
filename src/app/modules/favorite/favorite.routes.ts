@@ -19,7 +19,19 @@ router.delete(
   FavoriteControllers.removeFavorite,
 );
 
-router.get('/favorite-me', auth(), FavoriteControllers.favoriteMe);
-router.get('/favorite-list', auth(), FavoriteControllers.favoriteListCount);
+router.get('/favorite-meCount', auth(), FavoriteControllers.favoriteMe);
+router.get(
+  '/getProfilesWhoFavoritedMe',
+  auth(),
+  FavoriteControllers.getProfilesWhoFavoritedMe,
+);
+
+router.get(
+  '/favorite-listCount',
+  auth(),
+  FavoriteControllers.favoriteListCount,
+);
+
+router.get('/getMyFavoriteList', auth(), FavoriteControllers.getMyFavoriteList);
 
 export const FavoriteRouters = router;

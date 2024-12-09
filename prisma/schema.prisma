@@ -67,8 +67,8 @@ model Profile {
 
 model Favorite {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  userID          String   @unique @db.ObjectId
-  favoritedUserId String   @unique @db.ObjectId
+  userID          String   @db.ObjectId
+  favoritedUserId String   @db.ObjectId
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -77,12 +77,64 @@ model Favorite {
 
 model Notification {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId     String
-  receiverID String
+  userID     String   @db.ObjectId
+  receiverID String   @db.ObjectId
   title      String
   body       String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+model Chat {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderID   String   @db.ObjectId
+  receiverID String   @db.ObjectId
+  read       Boolean  @default(false)
+  message    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Tour {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  tourName  String
+  duration  String
+  groupSize String
+  tourType  String
+  language  String
+  about     String
+  startTime String
+  endTime   String
+  location  String
+  latitude  String
+  longitude String
+  includes  String
+  excludes  String
+  price     String
+  image     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Payment {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userID         String   @db.ObjectId
+  totalAmount    Float
+  paymentMethod  String
+  cardName       String
+  expiryDate     DateTime
+  securityCode   String
+  billingZipCode DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Date {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  personOneID String   @db.ObjectId
+  personTwoID String   @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 enum UserRoleEnum {

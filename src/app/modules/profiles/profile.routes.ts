@@ -6,7 +6,7 @@ import { fileUploader } from '../../../helpers/fileUploader';
 import auth from '../../middlewares/auth';
 const router = express.Router();
 
-router.get('/', auth(), ProfileControllers.getAllProfiles);
+router.get('/', ProfileControllers.getAllProfiles);
 router.get('/getMe', auth(), ProfileControllers.getMyProfile);
 router.put(
   '/',

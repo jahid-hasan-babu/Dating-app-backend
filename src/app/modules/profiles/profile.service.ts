@@ -5,76 +5,26 @@ import { searchFilter } from '../../utils/searchFilter';
 import httpStatus from 'http-status';
 import AppError from '../../errors/AppError';
 
-// const getAllProfiles = async (userId: string, req: Request) => {
-//   const { search } = req.query;
-//   const searchFilters = search ? searchFilter(search as string) : {};
 
-//   const result = await prisma.profile.findMany({
-//     where: searchFilters,
-//     select: {
-//       fullName: true,
-//       age: true,
-//       profileImage: true,
-//       language: true,
-//       isVerified: true,
-//       locationLang: true,
-//     },
-//   });
-
-//   return result;
-// };
-const getAllProfiles = async (userID: string, req: Request) => {
+const getAllProfiles = async (req: Request) => {
   const { search } = req.query;
   const searchFilters = search ? searchFilter(search as string) : {};
 
-  // Fetch all favorite records where `userID` matches the given userID
-  const favoriteRecords = await prisma.favorite.findMany({
-    where: {
-      userID: userID, // Find records favorited by this user
-    },
+  const result = await prisma.profile.findMany({
+    where: searchFilters,
     select: {
-      favoritedUserId: true, // Get the list of favorited user IDs
+      id: true,
+      fullName: true,
+      age: true,
+      profileImage: true,
+      language: true,
+      isVerified: true,
+      locationLang: true,
     },
-  });
-
-  console.log(favoriteRecords);
-
-  // Extract the favorited user IDs
-  const favoritedUserIds = favoriteRecords.map(fav => fav.favoritedUserId);
-
-  // Fetch profiles matching the favorited user IDs
-  const profiles = await prisma.profile.findMany({
-    where: {
-      ...searchFilters,
-      userId : { in: favoritedUserIds }, // Only fetch profiles that were favorited by the user
-    },
-    // select: {
-    //   id: true,
-    //   fullName: true,
-    //   age: true,
-    //   profileImage: true,
-    //   language: true,
-    //   isVerified: true,
-    //   locationLang: true,
-    // },
-  });
-  console.log(profiles);
-
-  // Create a Set of favorited user IDs for efficient lookup
-  const favoritedUserSet = new Set(favoritedUserIds);
-
-  // Map profiles to include `isFavorite`
-  const result = profiles.map(profile => {
-    const isFavorite = favoritedUserSet.has(profile.id);
-    return {
-      ...profile,
-      isFavorite,
-    };
   });
 
   return result;
 };
-
 
 const getSingleProfile = async (userId: string) => {
   const result = await prisma.profile.findUnique({

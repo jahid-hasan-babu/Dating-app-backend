@@ -34,6 +34,22 @@ const removeFavorite = catchAsync(
   },
 );
 
+
+const getProfilesWhoFavoritedMe = catchAsync(
+  async (req: Request & { user?: any }, res: Response) => {
+    const userID = req.user.id; // Get the ID of the logged-in user
+
+    // Get the total count of followers for this user
+    const result = await ProfileServices.getProfilesWhoFavoritedMe(userID);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      message: 'Favorite me  fetched successfully',
+      data: result,
+    });
+  },
+);
+
 const favoriteMe = catchAsync(
   async (req: Request & { user?: any }, res: Response) => {
     const userID = req.user.id; // Get the ID of the logged-in user
@@ -61,9 +77,23 @@ const favoriteListCount = catchAsync(
   },
 );
 
+const getMyFavoriteList = catchAsync(
+  async (req: Request & { user?: any }, res: Response) => {
+    const userID = req.user.id;
+    const result = await ProfileServices.getMyFavoriteList(userID);
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      message: 'Favorite list fetched successfully',
+      data: result,
+    });
+  },
+);
+
 export const FavoriteControllers = {
   addFavorite,
   removeFavorite,
+  getProfilesWhoFavoritedMe,
   favoriteMe,
   favoriteListCount,
+  getMyFavoriteList,
 };
