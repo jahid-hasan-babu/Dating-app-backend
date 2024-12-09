@@ -19,7 +19,6 @@ const auth = (...roles: string[]) => {
       }
 
       const token = authHeader.split(' ')[1];
-      console.log(token, 'check from auth');
 
       // Extract the token part
       if (!token) {

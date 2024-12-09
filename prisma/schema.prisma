@@ -65,6 +65,16 @@ model Profile {
   @@map("profiles")
 }
 
+model Favorite {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userID          String
+  favoritedUserId String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("favorites")
+}
+
 enum UserRoleEnum {
   USER
   ADMIN

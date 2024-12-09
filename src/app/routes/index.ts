@@ -3,7 +3,7 @@ import { AuthRouters } from '../modules/auth/auth.routes';
 import { UserRouters } from '../modules/user/user.routes';
 import path from 'path';
 import { ProfileRouters } from '../modules/profiles/profile.routes';
-
+import { FavoriteRouters } from '../modules/favorite/favorite.routes';
 
 const router = express.Router();
 
@@ -19,6 +19,10 @@ const moduleRoutes = [
   {
     path: '/profiles',
     route: ProfileRouters,
+  },
+  {
+    path: '/favorites',
+    route: FavoriteRouters,
   },
 ];
 

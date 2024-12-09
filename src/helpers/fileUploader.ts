@@ -15,11 +15,11 @@ const upload = multer({ storage: storage });
 
 // upload single image
 const uploadprofileImage = upload.single('profileImage');
-const uploadSiteLogo = upload.single('siteLogo');
+const uploadGalleryImage = upload.array('gallery', 5);
 
 // upload multiple image
-const uploadRiderVehicleInfo = upload.fields([
-  { name: 'vehicleRegistrationImage', maxCount: 1 },
+const uploadmultipeImage = upload.fields([
+  { name: 'gallery', maxCount: 5 },
   { name: 'vehicleInsuranceImage', maxCount: 1 },
   { name: 'drivingLicenceImage', maxCount: 1 },
 ]);
@@ -27,6 +27,6 @@ const uploadRiderVehicleInfo = upload.fields([
 export const fileUploader = {
   upload,
   uploadprofileImage,
-  uploadRiderVehicleInfo,
-  uploadSiteLogo,
+  uploadGalleryImage,
+  uploadmultipeImage,
 };
