@@ -67,12 +67,22 @@ model Profile {
 
 model Favorite {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  userID          String
-  favoritedUserId String
+  userID          String   @unique @db.ObjectId
+  favoritedUserId String   @unique @db.ObjectId
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   @@map("favorites")
+}
+
+model Notification {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String
+  receiverID String
+  title      String
+  body       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 enum UserRoleEnum {
