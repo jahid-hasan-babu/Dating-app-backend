@@ -3,6 +3,7 @@ import { AuthRouters } from '../modules/auth/auth.routes';
 import { UserRouters } from '../modules/user/user.routes';
 import { FavoriteRouters } from '../modules/favorite/favorite.routes';
 import { ProfileRouters } from '../modules/profiles/profile.routes';
+import { VerifyRouters } from '../modules/verify/verify.routes';
 
 const router = express.Router();
 
@@ -22,6 +23,10 @@ const moduleRoutes = [
   {
     path: '/favorites',
     route: FavoriteRouters,
+  },
+  {
+    path: '/verify',
+    route: VerifyRouters,
   },
 ];
 
