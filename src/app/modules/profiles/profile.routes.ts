@@ -6,16 +6,32 @@ import { fileUploader } from '../../../helpers/fileUploader';
 import auth from '../../middlewares/auth';
 const router = express.Router();
 
-router.get('/', ProfileControllers.getAllProfiles);
+router.get('/', auth(), ProfileControllers.getAllProfiles);
 router.get('/getMe', auth(), ProfileControllers.getMyProfile);
-router.get('/:userId', ProfileControllers.getSingleProfile);
-
 router.put(
-  '/:userId',
+  '/',
+  auth(),
   fileUploader.uploadprofileImage,
   ProfileControllers.updateProfile,
 );
-router.delete('/:userId', ProfileControllers.deleteProfile);
 
+router.get('/getProfileImage', auth(), ProfileControllers.getProfileImage);
+router.get('/getGalleryImage', auth(), ProfileControllers.getGalleryImage);
+
+router.put(
+  '/updateProfileImage',
+  auth(),
+  fileUploader.uploadprofileImage,
+  ProfileControllers.updateProfileImage,
+);
+router.put(
+  '/uploadGalleryImage',
+  auth(),
+  fileUploader.uploadGalleryImage,
+  ProfileControllers.uploadGalleryImage,
+);
+router.get('/:userId', ProfileControllers.getSingleProfile);
+
+router.delete('/:userId', ProfileControllers.deleteProfile);
 
 export const ProfileRouters = router;
