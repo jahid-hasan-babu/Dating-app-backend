@@ -4,6 +4,7 @@ import { UserRouters } from '../modules/user/user.routes';
 import { FavoriteRouters } from '../modules/favorite/favorite.routes';
 import { ProfileRouters } from '../modules/profiles/profile.routes';
 import { VerifyRouters } from '../modules/verify/verify.routes';
+import { Planrouters } from '../modules/plan/plan.routes';
 
 const router = express.Router();
 
@@ -27,6 +28,10 @@ const moduleRoutes = [
   {
     path: '/verify',
     route: VerifyRouters,
+  },
+  {
+    path: '/plans',
+    route: Planrouters,
   },
 ];
 

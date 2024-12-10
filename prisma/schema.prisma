@@ -116,6 +116,19 @@ model Tour {
   updatedAt DateTime @updatedAt
 }
 
+model plan {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  planName  String
+  duration  String
+  price     Float
+  productId String // The Stripe product ID
+  priceId   String // The Stripe price ID
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("plans")
+}
+
 model Payment {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
   userID         String   @db.ObjectId
