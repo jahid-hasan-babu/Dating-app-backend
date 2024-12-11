@@ -61,6 +61,7 @@ model Profile {
   updatedAt    DateTime        @updatedAt
   user         User            @relation(fields: [userId], references: [id])
   userId       String          @unique @db.ObjectId
+  customerId   String
 
   @@map("profiles")
 }
@@ -95,38 +96,33 @@ model Chat {
   updatedAt  DateTime @updatedAt
 }
 
-model Tour {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  tourName  String
-  duration  String
-  groupSize String
-  tourType  String
-  language  String
-  about     String
-  startTime String
-  endTime   String
-  location  String
-  latitude  String
-  longitude String
-  includes  String
-  excludes  String
-  price     String
-  image     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model plan {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  planName  String
-  duration  String
-  price     Float
-  productId String // The Stripe product ID
-  priceId   String // The Stripe price ID
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Plan {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  planName    String
+  duration    String
+  price       Float
+  productId   String // The Stripe product ID
+  description String?
+  priceId     String // The Stripe price ID
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@map("plans")
+}
+
+model Subscription {
+  id                   String    @id @default(auto()) @map("_id") @db.ObjectId
+  userID               String    @db.ObjectId
+  planID               String    @db.ObjectId // Reference to plan
+  stripeSubscriptionId String
+  status               String // "active", "canceled", etc.
+  startDate            DateTime  @default(now())
+  endDate              DateTime
+  renewedAt            DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@map("subscriptions")
 }
 
 model Payment {
@@ -135,9 +131,8 @@ model Payment {
   totalAmount    Float
   paymentMethod  String
   cardName       String
-  expiryDate     DateTime
   securityCode   String
-  billingZipCode DateTime
+  billingZipCode String // Changed DateTime to String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
