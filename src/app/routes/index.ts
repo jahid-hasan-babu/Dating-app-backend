@@ -7,6 +7,8 @@ import { VerifyRouters } from '../modules/verify/verify.routes';
 import { Planrouters } from '../modules/plan/plan.routes';
 import { PaymentRouters } from '../modules/payment/payment.routes';
 
+import { Messagerouters } from '../modules/message/message.routes';
+
 const router = express.Router();
 
 const moduleRoutes = [
@@ -38,6 +40,10 @@ const moduleRoutes = [
   {
     path: '/payments',
     route: PaymentRouters,
+  },
+  {
+    path: '/messages',
+    route: Messagerouters,
   },
 ];
 

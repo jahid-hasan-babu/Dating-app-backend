@@ -37,11 +37,8 @@ app.get('/', (req: Request, res: Response) => {
   });
 });
 
-
 app.use(socialLoginRoutes);
 app.use('/api/v1', router);
-
-
 
 app.use(globalErrorHandler);
 
