@@ -1,12 +1,34 @@
 import prisma from '../../utils/prisma';
-import httpStatus from 'http-status';
 import AppError from '../../errors/AppError';
-import catchAsync from '../../utils/catchAsync';
+import httpStatus from 'http-status';
 
 const createMessageInDB = async (req: any) => {
-  const { content } = req.body; // Assuming `payload.content` holds the message content
+  const { content } = req.body; // Assuming `req.body.content` holds the message content
   const senderId = req.user.id; // ID of the sender
   const receiverId = req.params.userId; // ID of the receiver
+
+  // Check if the sender has an active subscription
+  const subscription = await prisma.subscription.findFirst({
+    where: {
+      userID: senderId,
+      status: 'active', // Assuming 'active' indicates a valid subscription
+    },
+  });
+
+  if (!subscription) {
+    // Count the messages sent by the user
+    const messageCount = await prisma.message.count({
+      where: { senderId },
+    });
+
+    // If the user has already sent one message, deny further messages
+    if (messageCount >= 1) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'You need a subscription to send more messages.',
+      );
+    }
+  }
 
   // Find or create the channel between the sender and receiver
   let channel = await prisma.channel.findUnique({
