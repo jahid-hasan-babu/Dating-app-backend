@@ -43,6 +43,67 @@ const sendSingleNotification = async (req: any) => {
 };
 
 // Send notifications to all users with valid FCM tokens
+// const sendNotifications = async (req: any) => {
+//   const users = await prisma.user.findMany({
+//     where: {
+//       fcpmToken: {
+//         not: null, // Ensure the token is not null
+//       },
+//     },
+//     select: {
+//       id: true,
+//       fcpmToken: true,
+//     },
+//   });
+
+//   if (!users || users.length === 0) {
+//     throw new AppError(404, 'No users found with FCM tokens');
+//   }
+
+//   const fcmTokens = users.map(user => user.fcpmToken);
+
+//   const message = {
+//     notification: {
+//       title: req.body.title,
+//       body: req.body.body,
+//     },
+//     tokens: fcmTokens,
+//   };
+
+//   const response = await admin.messaging().sendEachForMulticast(message as any);
+
+//   // Find indices of successful responses
+//   const successIndices = response.responses
+//     .map((res, idx) => (res.success ? idx : null))
+//     .filter(idx => idx !== null) as number[];
+
+//   // Filter users by success indices
+//   const successfulUsers = successIndices.map(idx => users[idx]);
+
+//   // Prepare notifications data for only successfully notified users
+//   const notificationData = successfulUsers.map(user => ({
+//     receiverId: user.id,
+//     title: req.body.title,
+//     body: req.body.body,
+//   }));
+
+//   // Save notifications for successfully notified users
+//   await prisma.notifications.createMany({
+//     data: notificationData,
+//   });
+
+//   // Collect failed tokens
+//   const failedTokens = response.responses
+//     .map((res, idx) => (!res.success ? fcmTokens[idx] : null))
+//     .filter(token => token !== null);
+
+//   return {
+//     successCount: response.successCount,
+//     failureCount: response.failureCount,
+//     failedTokens,
+//   };
+// };
+
 const sendNotifications = async (req: any) => {
   const users = await prisma.user.findMany({
     where: {
@@ -87,10 +148,12 @@ const sendNotifications = async (req: any) => {
     body: req.body.body,
   }));
 
-  // Save notifications for successfully notified users
-  await prisma.notifications.createMany({
-    data: notificationData,
-  });
+  // Save notifications only if there is data
+  if (notificationData.length > 0) {
+    await prisma.notifications.createMany({
+      data: notificationData,
+    });
+  }
 
   // Collect failed tokens
   const failedTokens = response.responses
@@ -103,6 +166,7 @@ const sendNotifications = async (req: any) => {
     failedTokens,
   };
 };
+
 
 const getNotificationsFromDB = async (req: any) => {
   const notifications = await prisma.notifications.findMany({
