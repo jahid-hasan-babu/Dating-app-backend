@@ -169,6 +169,13 @@ const socialLogin = async (payload: any) => {
   });
 
   if (user) {
+    // Update the user's fcpmToken
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { fcpmToken: payload.fcpmToken || null }, // Update with the token from payload
+    });
+
+    // Generate access token
     const accessToken = generateToken(
       {
         id: user.id,
@@ -192,6 +199,7 @@ const socialLogin = async (payload: any) => {
               googleId: payload.googleId || null,
               facebookId: payload.facebookId || null,
               role: payload.role, // Default to 'user' if no role is provided
+              fcpmToken: payload.fcpmToken || null, // Save the fcpmToken here
             },
           });
 
