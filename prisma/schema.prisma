@@ -11,21 +11,23 @@ datasource db {
 }
 
 model User {
-  id         String       @id @default(auto()) @map("_id") @db.ObjectId
-  email      String?      @unique
-  password   String?
-  role       UserRoleEnum @default(USER)
-  status     UserStatus   @default(ACTIVATE)
-  isVerified veriedStatus @default(NEW)
-  googleId   String?
-  facebookId String?
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  profile    Profile?
-  sentMessages    Message[] @relation("SentMessages")
-  receivedMessages Message[] @relation("ReceivedMessages")
-  channelsAsUser1  Channel[] @relation("UserChannel1")
-  channelsAsUser2  Channel[] @relation("UserChannel2")
+  id               String          @id @default(auto()) @map("_id") @db.ObjectId
+  email            String?         @unique
+  password         String?
+  role             UserRoleEnum    @default(USER)
+  status           UserStatus      @default(ACTIVATE)
+  isVerified       veriedStatus    @default(NEW)
+  googleId         String?
+  facebookId       String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  fcpmToken        String?
+  profile          Profile?
+  sentMessages     Message[]       @relation("SentMessages")
+  receivedMessages Message[]       @relation("ReceivedMessages")
+  channelsAsUser1  Channel[]       @relation("UserChannel1")
+  channelsAsUser2  Channel[]       @relation("UserChannel2")
+  notifications    Notifications[] @relation("Notifications")
 
   @@map("users")
 }
@@ -80,68 +82,56 @@ model Favorite {
   @@map("favorites")
 }
 
-model Notification {
+model Notifications {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  userID     String   @db.ObjectId
-  receiverID String   @db.ObjectId
+  receiverId String   @db.ObjectId
   title      String
   body       String
+  read       Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [receiverId], references: [id], name: "Notifications")
 }
-
-// model Chat {
-//  id String @id @default(auto()) @map("_id") @db.ObjectId
-//   from      String   // Sender of the message
-//   to        String   // Recipient of the message
-//   roomId    String   // ID of the chat room
-//   message   String   // Message content
-//   timestamp DateTime @default(now()) // Timestamp of the message
-
-//   @@map("messages")
-// }
 
 
 
 model Message {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  content     String? 
-  senderId    String   @db.ObjectId
-  receiverId  String   @db.ObjectId
-  replyId     String?  @db.ObjectId
-  isRead      Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  content    String?
+  senderId   String   @db.ObjectId
+  receiverId String   @db.ObjectId
+  replyId    String?  @db.ObjectId
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
-  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  channelId   String   @db.ObjectId
-  channel     Channel  @relation(fields: [channelId], references: [id])
+  sender    User    @relation("SentMessages", fields: [senderId], references: [id])
+  receiver  User    @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  channelId String  @db.ObjectId
+  channel   Channel @relation(fields: [channelId], references: [id])
 
   @@map("messages")
 }
 
 model Channel {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
   participant1Id String   @db.ObjectId
   participant2Id String   @db.ObjectId
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  participant1  User      @relation("UserChannel1", fields: [participant1Id], references: [id])
-  participant2  User      @relation("UserChannel2", fields: [participant2Id], references: [id])
-  messages      Message[]
+  participant1 User      @relation("UserChannel1", fields: [participant1Id], references: [id])
+  participant2 User      @relation("UserChannel2", fields: [participant2Id], references: [id])
+  messages     Message[]
 
-  @@map("channels")
   @@unique([participant1Id, participant2Id])
+  @@map("channels")
 }
-
 
 enum ChannelType {
   PRIVATE
   PUBLIC
 }
-
 
 model Plan {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId

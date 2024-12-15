@@ -29,6 +29,7 @@ const registerUser = async (payload: any) => {
   const userData = {
     email: payload.email,
     password: hashedPassword,
+    fcpmToken: payload.fcpmToken || null,
   };
 
   try {

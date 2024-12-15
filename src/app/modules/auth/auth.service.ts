@@ -11,12 +11,21 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: '2024-11-20.acacia',
 });
 
-const loginUser = async (payload: { email: string; password: string }) => {
+
+
+const loginUser = async (payload: {
+  email: string;
+  password: string;
+  fcpmToken?: string;
+}) => {
+  // Find the user by email
   const userData = await prisma.user.findUniqueOrThrow({
     where: {
       email: payload.email,
     },
   });
+
+  // Check if the password is correct
   const isCorrectPassword = await bcrypt.compare(
     payload.password,
     userData.password as string,
@@ -26,7 +35,20 @@ const loginUser = async (payload: { email: string; password: string }) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'Password incorrect');
   }
 
-  const accessToken = await generateToken(
+  // Update the FCM token if provided
+  if (payload?.fcpmToken) {
+    await prisma.user.update({
+      where: {
+        email: payload.email, // Use email as the unique identifier for updating
+      },
+      data: {
+        fcpmToken: payload.fcpmToken,
+      },
+    });
+  }
+
+  // Generate an access token
+  const accessToken = generateToken(
     {
       id: userData.id,
       email: userData.email as string,
@@ -35,6 +57,8 @@ const loginUser = async (payload: { email: string; password: string }) => {
     config.jwt.access_secret as Secret,
     config.jwt.access_expires_in as string,
   );
+
+  // Return user details and access token
   return {
     id: userData.id,
     email: userData.email,
@@ -42,6 +66,8 @@ const loginUser = async (payload: { email: string; password: string }) => {
     accessToken: accessToken,
   };
 };
+
+
 
 const createOtp = async (payload: { email: string }) => {
   // Check if the user exists
@@ -133,47 +159,6 @@ const resetPassword = async (payload: { email: string; password: string }) => {
   return updatedUser;
 };
 
-// social login
-// const socialLogin = async (payload: any) => {
-//   // Check if the user exists in the database
-//   let user = await prisma.user.findFirst({
-//     where: {
-//       OR: [{ googleId: payload.googleId }, { facebookId: payload.facebookId }],
-//     },
-//   });
-
-//   if (user) {
-//     const accessToken = generateToken(
-//       {
-//         id: user.id,
-//         email: user.email as string,
-//         role: user.role,
-//       },
-//       config.jwt.access_secret as Secret,
-//       config.jwt.access_expires_in as string,
-//     );
-
-//     return accessToken;
-//   } else {
-//     user = await prisma.user.create({
-//       data: {
-//         ...payload,
-//       },
-//     });
-
-//     const accessToken = generateToken(
-//       {
-//         id: user.id,
-//         email: user.email as string,
-//         role: user.role,
-//       },
-//       config.jwt.access_secret as Secret,
-//       config.jwt.access_expires_in as string,
-//     );
-
-//     return accessToken;
-//   }
-// };
 
 const socialLogin = async (payload: any) => {
   // Check if the user exists in the database
