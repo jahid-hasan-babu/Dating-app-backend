@@ -2,11 +2,9 @@ import httpStatus from 'http-status';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { AuthServices } from './auth.service';
-import facebook from './auth.facebook';
-import google from './auth.google';
+import { Request, Response } from 'express';
 
-
-const loginUser = catchAsync(async (req, res) => {
+const loginUser = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthServices.loginUser(req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -15,7 +13,7 @@ const loginUser = catchAsync(async (req, res) => {
   });
 });
 
-const createOtp = catchAsync(async (req, res) => {
+const createOtp = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthServices.createOtp(req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -24,7 +22,7 @@ const createOtp = catchAsync(async (req, res) => {
   });
 });
 
-const verifyOtp = catchAsync(async (req, res) => {
+const verifyOtp = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthServices.verifyOtp(req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -33,7 +31,7 @@ const verifyOtp = catchAsync(async (req, res) => {
   });
 });
 
-const resetPassword = catchAsync(async (req, res) => {
+const resetPassword = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthServices.resetPassword(req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -42,17 +40,8 @@ const resetPassword = catchAsync(async (req, res) => {
   });
 });
 
-const facebookLogin = catchAsync(async (req, res) => {
-  const result = await facebook.authenticate(req.body);
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    message: 'User logged in successfully',
-    data: result,
-  });
-});
-
-const googleLogin = catchAsync(async (req, res) => {
-  const result = await google.authenticate(req.body);
+const socialLogin = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthServices.socialLogin(req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     message: 'User logged in successfully',
@@ -62,8 +51,7 @@ const googleLogin = catchAsync(async (req, res) => {
 
 export const AuthControllers = {
   loginUser,
-  facebookLogin,
-  googleLogin,
+  socialLogin,
   createOtp,
   verifyOtp,
   resetPassword,

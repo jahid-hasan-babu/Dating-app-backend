@@ -2,7 +2,7 @@ import express from 'express';
 import validateRequest from '../../middlewares/validateRequest';
 import { AuthControllers } from './auth.controller';
 import { authValidation } from './auth.validation';
-import facebookLogin from './auth.facebook';
+
 const router = express.Router();
 
 router.post(
@@ -25,9 +25,8 @@ router.post(
 
 router.post('/reset-password', AuthControllers.resetPassword);
 
-router.get('/facebook', AuthControllers.facebookLogin);
+router.post('/socialLogin', AuthControllers.socialLogin);
 
-router.get('/google', AuthControllers.googleLogin);
 
 
 export const AuthRouters = router;

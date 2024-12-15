@@ -6,7 +6,7 @@ import router from "./app/routes";
 import path from 'path';
 import session from 'express-session';
 import passport from 'passport';
-import { socialLoginRoutes } from './app/modules/socialLogin/socialLogin.route';
+
 
 const app: Application = express();
 app.use(
@@ -37,7 +37,7 @@ app.get('/', (req: Request, res: Response) => {
   });
 });
 
-app.use(socialLoginRoutes);
+
 app.use('/api/v1', router);
 
 app.use(globalErrorHandler);

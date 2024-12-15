@@ -6,6 +6,10 @@ import AppError from '../../errors/AppError';
 import { generateToken } from '../../utils/generateToken';
 import prisma from '../../utils/prisma';
 import sentEmailUtility from '../../utils/sentEmailUtility';
+import Stripe from 'stripe';
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+  apiVersion: '2024-11-20.acacia',
+});
 
 const loginUser = async (payload: { email: string; password: string }) => {
   const userData = await prisma.user.findUniqueOrThrow({
@@ -38,7 +42,6 @@ const loginUser = async (payload: { email: string; password: string }) => {
     accessToken: accessToken,
   };
 };
-
 
 const createOtp = async (payload: { email: string }) => {
   // Check if the user exists
@@ -130,7 +133,157 @@ const resetPassword = async (payload: { email: string; password: string }) => {
   return updatedUser;
 };
 
-export const AuthServices = { loginUser, createOtp, verifyOtp, resetPassword };
+// social login
+// const socialLogin = async (payload: any) => {
+//   // Check if the user exists in the database
+//   let user = await prisma.user.findFirst({
+//     where: {
+//       OR: [{ googleId: payload.googleId }, { facebookId: payload.facebookId }],
+//     },
+//   });
+
+//   if (user) {
+//     const accessToken = generateToken(
+//       {
+//         id: user.id,
+//         email: user.email as string,
+//         role: user.role,
+//       },
+//       config.jwt.access_secret as Secret,
+//       config.jwt.access_expires_in as string,
+//     );
+
+//     return accessToken;
+//   } else {
+//     user = await prisma.user.create({
+//       data: {
+//         ...payload,
+//       },
+//     });
+
+//     const accessToken = generateToken(
+//       {
+//         id: user.id,
+//         email: user.email as string,
+//         role: user.role,
+//       },
+//       config.jwt.access_secret as Secret,
+//       config.jwt.access_expires_in as string,
+//     );
+
+//     return accessToken;
+//   }
+// };
+
+const socialLogin = async (payload: any) => {
+  // Check if the user exists in the database
+  let user = await prisma.user.findFirst({
+    where: {
+      OR: [{ googleId: payload.googleId }, { facebookId: payload.facebookId }],
+    },
+  });
+
+  if (user) {
+    const accessToken = generateToken(
+      {
+        id: user.id,
+        email: user.email as string,
+        role: user.role,
+      },
+      config.jwt.access_secret as Secret,
+      config.jwt.access_expires_in as string,
+    );
+
+    return accessToken;
+  } else {
+    try {
+      // Use a transaction to create both user and profile
+      const result = await prisma.$transaction(
+        async (transactionClient: any) => {
+          // Create the user
+          const newUser = await transactionClient.user.create({
+            data: {
+              email: payload.email,
+              googleId: payload.googleId || null,
+              facebookId: payload.facebookId || null,
+              role: payload.role, // Default to 'user' if no role is provided
+            },
+          });
+
+          // Create a Stripe customer
+          const stripeCustomer = await stripe.customers.create({
+            email: payload.email,
+            name: payload.fullName || undefined,
+            phone: payload.phoneNumber || undefined,
+          });
+
+          // Prepare profile data
+          const profileData = {
+            fullName: payload.fullName || null,
+            username: payload.username || null,
+            phoneNumber: payload.phoneNumber || null,
+            profileImage: payload.profileImage || null,
+            locationLat: payload.locationLat || null,
+            locationLang: payload.locationLang || null,
+            country: payload.country || null,
+            city: payload.city || null,
+            gender: payload.gender || null,
+            dateOfBirth: payload.dateOfBirth || null,
+            height: payload.height || null,
+            interests: payload.interests || [],
+            about: payload.about || null,
+            relationship: payload.relationship || null,
+            language: payload.language || null,
+            work: payload.work || null,
+            gallery: payload.gallery || [],
+            customerId: stripeCustomer.id, // Save the Stripe customer ID here
+
+            // Link profile to user using `connect`
+            user: {
+              connect: {
+                id: newUser.id,
+              },
+            },
+          };
+
+          // Create the profile
+          const profile = await transactionClient.profile.create({
+            data: profileData,
+          });
+
+          return { newUser, profile };
+        },
+      );
+
+      // Generate access token for the newly created user
+      const accessToken = generateToken(
+        {
+          id: result.newUser.id,
+          email: result.newUser.email as string,
+          role: result.newUser.role,
+        },
+        config.jwt.access_secret as Secret,
+        config.jwt.access_expires_in as string,
+      );
+
+      return accessToken;
+    } catch (error: any) {
+      throw new AppError(
+        httpStatus.INTERNAL_SERVER_ERROR,
+        'Error creating user and profile during social login',
+        error,
+      );
+    }
+  }
+};
+
+export const AuthServices = {
+  loginUser,
+  createOtp,
+  verifyOtp,
+  resetPassword,
+  socialLogin,
+};
 
 
 
