@@ -32,6 +32,7 @@
     "@types/passport": "^1.0.17",
     "@types/passport-facebook": "^3.0.3",
     "@types/passport-google-oauth20": "^2.0.16",
+    "@types/paypal__checkout-server-sdk": "^1.0.8",
     "@types/ws": "^8.5.13",
     "eslint": "^9.15.0",
     "prettier": "^3.4.1",
@@ -40,7 +41,9 @@
     "typescript": "^5.4.3"
   },
   "dependencies": {
+    "@paypal/checkout-server-sdk": "^1.0.3",
     "@prisma/client": "^5.14.0",
+    "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

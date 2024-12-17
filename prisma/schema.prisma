@@ -93,8 +93,6 @@ model Notifications {
   user       User     @relation(fields: [receiverId], references: [id], name: "Notifications")
 }
 
-
-
 model Message {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   content    String?
@@ -134,15 +132,17 @@ enum ChannelType {
 }
 
 model Plan {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  planName    String
-  duration    String
-  price       Float
-  productId   String // The Stripe product ID
-  description String?
-  priceId     String // The Stripe price ID
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  planName        String
+  duration        String
+  price           Float
+  productId       String // The Stripe product ID
+  description     String?
+  priceId         String // The Stripe price ID
+  paypalProductId String? // The PayPal product ID
+  paypalPlanId    String? // The PayPal plan ID
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@map("plans")
 }
@@ -151,7 +151,8 @@ model Subscription {
   id                   String    @id @default(auto()) @map("_id") @db.ObjectId
   userID               String    @db.ObjectId
   planID               String    @db.ObjectId // Reference to plan
-  stripeSubscriptionId String
+  stripeSubscriptionId String?
+  paypalSubscriptionId String?
   status               String // "active", "canceled", etc.
   startDate            DateTime  @default(now())
   endDate              DateTime
