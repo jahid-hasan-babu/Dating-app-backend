@@ -19,6 +19,7 @@ const getMyProfile = catchAsync(
   async (req: Request & { user?: any }, res: Response) => {
     const userId = req.user.id;
 
+
     if (!userId) {
       throw new AppError(httpStatus.UNAUTHORIZED, 'User not authenticated');
     }
@@ -56,8 +57,8 @@ const getProfileImage = catchAsync(
 
 const updateProfile = catchAsync(
   async (req: Request & { user?: any }, res: Response) => {
-    const userID = req.user.id;
-    const result = await ProfileServices.updateProfile(userID, req.body, req);
+    const userId = req.user.id;
+    const result = await ProfileServices.updateProfile(userId, req.body, req);
     sendResponse(res, {
       statusCode: httpStatus.OK,
       success: true,

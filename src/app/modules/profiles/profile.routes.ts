@@ -30,7 +30,7 @@ router.put(
   fileUploader.uploadGalleryImage,
   ProfileControllers.uploadGalleryImage,
 );
-router.get('/:userId', ProfileControllers.getSingleProfile);
+router.get('/:userId', auth('ADMIN'), ProfileControllers.getSingleProfile);
 
 router.delete('/:userId', ProfileControllers.deleteProfile);
 

@@ -95,51 +95,53 @@ const getGalleryImage = async (userId: string) => {
 };
 
 const updateProfile = async (userId: string, payload: any, req: Request) => {
-  const files = req.file as any; // Ensure files are being passed from the request
+  const files = req.file as any;
+
+  console.log('Updating profile for userId:', userId);
+
+  // Check if profile exists
   const profileInfo = await prisma.profile.findUnique({
-    where: {
-      userId: userId,
-    },
+    where: { userId: userId },
   });
 
   if (!profileInfo) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+    console.error(`Profile not found for userId: ${userId}`);
+    throw new AppError(httpStatus.NOT_FOUND, 'Profile not found');
   }
 
+  // Parse profileData
   const profileData = req.body?.bodyData
-    ? // Parse the 'user' JSON string if it's present
-      (() => {
+    ? (() => {
         try {
-          return JSON.parse(req.body.bodyData); // Parse the JSON string inside 'user'
+          return JSON.parse(req.body.bodyData);
         } catch (error) {
           throw new AppError(
             httpStatus.BAD_REQUEST,
-            'Invalid JSON format in user data',
+            'Invalid JSON format in profile data',
           );
         }
       })()
     : {};
 
-  const profileImage = files
+  // Handle profile image
+  const profileImage = files?.originalname
     ? `${process.env.backend_base_url}/uploads/${files.originalname}`
     : profileInfo.profileImage;
 
+  // Update profile
   const updatedProfile = await prisma.profile.update({
-    where: {
-      userId: userId,
-    },
+    where: { userId: userId },
     data: {
       ...profileData,
       profileImage,
     },
   });
 
-  if (!updatedProfile) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'User update failed');
-  }
+  console.log('Profile updated successfully:', updatedProfile);
 
   return updatedProfile;
 };
+
 
 const updateProfileImage = async (userId: string, req: Request) => {
   const files = req.file as any;
