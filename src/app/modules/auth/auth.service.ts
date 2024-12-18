@@ -120,6 +120,14 @@ const createOtp = async (payload: { email: string }) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'User not found');
   }
 
+  // Check if the user's password field is null
+  if (!userData.password) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'You cannot reset the password because you logged in using social media.',
+    );
+  }
+
   // Generate OTP
   const otp = Math.floor(100000 + Math.random() * 900000);
 
@@ -138,6 +146,7 @@ const createOtp = async (payload: { email: string }) => {
 
   return { otpData };
 };
+
 
 const verifyOtp = async (payload: { email: string; otp: number }) => {
   // Check if the user exists
