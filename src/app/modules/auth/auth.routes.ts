@@ -2,6 +2,7 @@ import express from 'express';
 import validateRequest from '../../middlewares/validateRequest';
 import { AuthControllers } from './auth.controller';
 import { authValidation } from './auth.validation';
+import auth from '../../middlewares/auth';
 
 const router = express.Router();
 
@@ -10,6 +11,8 @@ router.post(
   validateRequest(authValidation.loginUser),
   AuthControllers.loginUser,
 );
+
+router.post('/logout', auth(), AuthControllers.logout);
 
 router.post(
   '/forget-password',

@@ -13,6 +13,19 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const logout = catchAsync(
+  async (req: Request & { user?: any }, res: Response) => {
+    const userId = req.user.id;
+    console.log(userId);
+    const result = await AuthServices.logout(userId);
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      message: 'User logged out successfully',
+      data: result,
+    });
+  },
+);
+
 const createOtp = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthServices.createOtp(req.body);
   sendResponse(res, {
@@ -52,6 +65,7 @@ const socialLogin = catchAsync(async (req: Request, res: Response) => {
 export const AuthControllers = {
   loginUser,
   socialLogin,
+  logout,
   createOtp,
   verifyOtp,
   resetPassword,

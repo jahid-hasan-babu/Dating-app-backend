@@ -69,6 +69,47 @@ const loginUser = async (payload: {
 
 
 
+const logout = async (userId: string) => {
+  try {
+    // Ensure userId is provided
+
+    if (!userId) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'User ID must be provided.');
+    }
+
+    // Find the user by ID
+    const userData = await prisma.user.findUniqueOrThrow({
+      where: {
+        id: userId, // Check id
+      },
+    });
+
+    // Update the FCM token to null
+    await prisma.user.update({
+      where: {
+        id: userData.id, // Use the unique ID to ensure accurate update
+      },
+      data: {
+        fcpmToken: null,
+      },
+    });
+
+    return { message: 'Logout successful' };
+  } catch (error: any) {
+    // Handle Prisma errors
+    if (error.code === 'P2025') {
+      // 'Record not found' error from Prisma
+      throw new AppError(httpStatus.NOT_FOUND, 'User not found.');
+    }
+
+    // Generic error handling
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      error.message || 'An unexpected error occurred during logout.',
+    );
+  }
+};
+
 const createOtp = async (payload: { email: string }) => {
   // Check if the user exists
   const userData = await prisma.user.findUnique({
@@ -159,47 +200,50 @@ const resetPassword = async (payload: { email: string; password: string }) => {
   return updatedUser;
 };
 
-
 const socialLogin = async (payload: any) => {
-  // Check if the user exists in the database
-  let user = await prisma.user.findFirst({
-    where: {
-      OR: [{ googleId: payload.googleId }, { facebookId: payload.facebookId }],
-    },
-  });
-
-  if (user) {
-    // Update the user's fcpmToken
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { fcpmToken: payload.fcpmToken || null }, // Update with the token from payload
+  try {
+    // Check if the user exists in the database using Google ID, Facebook ID, or email/username
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { googleId: payload.googleId },
+          { facebookId: payload.facebookId },
+          { email: payload.email },
+        ],
+      },
     });
 
-    // Generate access token
-    const accessToken = generateToken(
-      {
-        id: user.id,
-        email: user.email as string,
-        role: user.role,
-      },
-      config.jwt.access_secret as Secret,
-      config.jwt.access_expires_in as string,
-    );
+    if (user) {
+      // Update the user's FCM token
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { fcpmToken: payload.fcpmToken || null },
+      });
 
-    return accessToken;
-  } else {
-    try {
-      // Use a transaction to create both user and profile
+      // Generate access token for existing user
+      const accessToken = generateToken(
+        {
+          id: user.id,
+          email: user.email || '',
+          role: user.role,
+        },
+        config.jwt.access_secret as Secret,
+        config.jwt.access_expires_in as string,
+      );
+
+      return accessToken;
+    } else {
+      // If user does not exist, create a new user and associated profile
       const result = await prisma.$transaction(
         async (transactionClient: any) => {
           // Create the user
           const newUser = await transactionClient.user.create({
             data: {
-              email: payload.email,
+              email: payload.email || null,
               googleId: payload.googleId || null,
               facebookId: payload.facebookId || null,
-              role: payload.role, // Default to 'user' if no role is provided
-              fcpmToken: payload.fcpmToken || null, // Save the fcpmToken here
+              role: payload.role || 'user', // Default role is 'user'
+              fcpmToken: payload.fcpmToken || null,
             },
           });
 
@@ -210,38 +254,29 @@ const socialLogin = async (payload: any) => {
             phone: payload.phoneNumber || undefined,
           });
 
-          // Prepare profile data
-          const profileData = {
-            fullName: payload.fullName || null,
-            username: payload.username || null,
-            phoneNumber: payload.phoneNumber || null,
-            profileImage: payload.profileImage || null,
-            locationLat: payload.locationLat || null,
-            locationLang: payload.locationLang || null,
-            country: payload.country || null,
-            city: payload.city || null,
-            gender: payload.gender || null,
-            dateOfBirth: payload.dateOfBirth || null,
-            height: payload.height || null,
-            interests: payload.interests || [],
-            about: payload.about || null,
-            relationship: payload.relationship || null,
-            language: payload.language || null,
-            work: payload.work || null,
-            gallery: payload.gallery || [],
-            customerId: stripeCustomer.id, // Save the Stripe customer ID here
-
-            // Link profile to user using `connect`
-            user: {
-              connect: {
-                id: newUser.id,
-              },
-            },
-          };
-
           // Create the profile
           const profile = await transactionClient.profile.create({
-            data: profileData,
+            data: {
+              fullName: payload.fullName || null,
+              username: payload.username || null,
+              phoneNumber: payload.phoneNumber || null,
+              profileImage: payload.profileImage || null,
+              locationLat: payload.locationLat || null,
+              locationLang: payload.locationLang || null,
+              country: payload.country || null,
+              city: payload.city || null,
+              gender: payload.gender || null,
+              dateOfBirth: payload.dateOfBirth || null,
+              height: payload.height || null,
+              interests: payload.interests || [],
+              about: payload.about || null,
+              relationship: payload.relationship || null,
+              language: payload.language || null,
+              work: payload.work || null,
+              gallery: payload.gallery || [],
+              customerId: stripeCustomer.id, // Save the Stripe customer ID here
+              user: { connect: { id: newUser.id } }, // Link the profile to the user
+            },
           });
 
           return { newUser, profile };
@@ -252,7 +287,7 @@ const socialLogin = async (payload: any) => {
       const accessToken = generateToken(
         {
           id: result.newUser.id,
-          email: result.newUser.email as string,
+          email: result.newUser.email || '',
           role: result.newUser.role,
         },
         config.jwt.access_secret as Secret,
@@ -260,19 +295,20 @@ const socialLogin = async (payload: any) => {
       );
 
       return accessToken;
-    } catch (error: any) {
-      throw new AppError(
-        httpStatus.INTERNAL_SERVER_ERROR,
-        'Error creating user and profile during social login',
-        error,
-      );
     }
+  } catch (error: any) {
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      'Error during social login',
+      error.message || 'An unexpected error occurred',
+    );
   }
 };
 
 export const AuthServices = {
   loginUser,
   createOtp,
+  logout,
   verifyOtp,
   resetPassword,
   socialLogin,
