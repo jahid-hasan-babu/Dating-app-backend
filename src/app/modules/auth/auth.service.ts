@@ -242,7 +242,7 @@ const socialLogin = async (payload: any) => {
               email: payload.email || null,
               googleId: payload.googleId || null,
               facebookId: payload.facebookId || null,
-              role: payload.role || 'user', // Default role is 'user'
+              role: payload.role || 'USER', // Default role is 'user'
               fcpmToken: payload.fcpmToken || null,
             },
           });
