@@ -250,6 +250,7 @@ const socialLogin = async (payload: any) => {
             data: {
               email: payload.email || null,
               googleId: payload.googleId || null,
+              password: payload.password || null,
               facebookId: payload.facebookId || null,
               role: payload.role || 'USER', // Default role is 'user'
               fcpmToken: payload.fcpmToken || null,
