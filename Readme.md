@@ -1,4 +1,4 @@
-# Server with Typescript, PostgreSQL, Prisma and zod validation
+# Server with Typescript, MongoDB, Prisma and zod validation
 
 ## How to run this project
 
@@ -36,7 +36,7 @@
 
 ---
 
-- PostgreSQL (Database)
+- MongoDB (Database)
 - Prisma ORM
 - Express
 - Typescript
