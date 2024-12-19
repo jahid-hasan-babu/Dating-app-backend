@@ -240,7 +240,12 @@ const socialLogin = async (payload: any) => {
         config.jwt.access_expires_in as string,
       );
 
-      return accessToken;
+      return {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        accessToken: accessToken,
+      };
     } else {
       // If user does not exist, create a new user and associated profile
       const result = await prisma.$transaction(

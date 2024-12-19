@@ -97,7 +97,7 @@ const getGalleryImage = async (userId: string) => {
 const updateProfile = async (userId: string, payload: any, req: Request) => {
   const files = req.file as any;
 
-  console.log('Updating profile for userId:', userId);
+  // console.log('Updating profile for userId:', userId);
 
   // Check if profile exists
   const profileInfo = await prisma.profile.findUnique({
