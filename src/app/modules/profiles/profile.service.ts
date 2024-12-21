@@ -44,7 +44,15 @@ const getMyProfile = async (userId: string) => {
       fullName: true,
       username: true,
       profileImage: true,
+      gallery: true,
+      isVerified: true,
+      about: true,
       country: true,
+      city: true,
+      interests: true,
+      locationLang: true,
+      locationLat: true,
+      relationship: true,
       language: true,
       gender: true,
       age: true,
@@ -137,7 +145,7 @@ const updateProfile = async (userId: string, payload: any, req: Request) => {
     },
   });
 
-  console.log('Profile updated successfully:', updatedProfile);
+
 
   return updatedProfile;
 };
