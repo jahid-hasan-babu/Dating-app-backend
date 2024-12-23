@@ -14,6 +14,7 @@ const getAllProfiles = async (req: Request) => {
     where: searchFilters,
     select: {
       id: true,
+      userId: true,
       fullName: true,
       age: true,
       profileImage: true,
@@ -40,6 +41,31 @@ const getSingleProfile = async (userId: string) => {
   const result = await prisma.profile.findUnique({
     where: {
       userId: userId,
+    },
+    select: {
+      fullName: true,
+      username: true,
+      profileImage: true,
+      gallery: true,
+      isVerified: true,
+      about: true,
+      country: true,
+      flag: true,
+      city: true,
+      interests: true,
+      locationLang: true,
+      locationLat: true,
+      relationship: true,
+      language: true,
+      gender: true,
+      age: true,
+      height: true,
+      work: true,
+      user: {
+        select: {
+          status: true, // Include the status field from the user model
+        },
+      },
     },
   });
   return result;
