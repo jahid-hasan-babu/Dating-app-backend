@@ -75,14 +75,20 @@ const createMessageInDB = async (
   const receiverId = userId; // ID of the receiver
 
   // Find or create the channel between the sender and receiver
-  let channel = await prisma.channel.findUnique({
-    where: {
-      participant1Id_participant2Id: {
+let channel = await prisma.channel.findFirst({
+  where: {
+    OR: [
+      {
         participant1Id: senderId,
         participant2Id: receiverId,
       },
-    },
-  });
+      {
+        participant1Id: receiverId,
+        participant2Id: senderId,
+      },
+    ],
+  },
+});
 
   if (!channel) {
     channel = await prisma.channel.create({
