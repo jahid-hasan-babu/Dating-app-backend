@@ -19,6 +19,7 @@ const getAllProfiles = async (req: Request) => {
       profileImage: true,
       isVerified: true,
       country: true,
+      flag: true,
       city: true,
       user: {
         select: {
@@ -57,6 +58,7 @@ const getMyProfile = async (userId: string) => {
       isVerified: true,
       about: true,
       country: true,
+      flag: true,
       city: true,
       interests: true,
       locationLang: true,

@@ -52,6 +52,7 @@ model Profile {
   locationLat  String?
   locationLang String?
   country      String?
+  flag         String?
   city         String?
   age          String?
   gender       GenderStatus?

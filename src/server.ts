@@ -164,118 +164,119 @@ async function main() {
 
     // Listen for messages
     ws.on('message', async message => {
-      try {
-        const parsedMessage = JSON.parse(message.toString());
-        const { type, userId, channelId } = parsedMessage;
+       try {
+         const parsedMessage = JSON.parse(message.toString());
+         const { type, userId, channelId } = parsedMessage;
 
-        if (type === 'subscribe') {
-          if (!userId) {
-            ws.send(
-              JSON.stringify({ error: 'userId is required to subscribe' }),
-            );
-            return;
-          }
+         if (type === 'subscribe') {
+           if (!channelId) {
+             ws.send(
+               JSON.stringify({ error: 'ChannelId is required to subscribe' }),
+             );
+             return;
+           }
 
-          // Manage subscription (unsubscribe from the previous channel)
-          if (subscribedChannel) {
-            const previousSet = channelClients.get(subscribedChannel);
-            previousSet?.delete(ws);
-            if (previousSet?.size === 0) {
-              channelClients.delete(subscribedChannel);
-            }
-          }
+           // Unsubscribe from the previous channel if necessary
+           if (subscribedChannel) {
+             const previousSet = channelClients.get(subscribedChannel);
+             previousSet?.delete(ws);
+             if (previousSet?.size === 0) {
+               channelClients.delete(subscribedChannel);
+             }
+           }
 
-          // Subscribe to the new channel
-          if (!channelClients.has(userId)) {
-            channelClients.set(userId, new Set());
-          }
-          channelClients.get(userId)?.add(ws);
-          subscribedChannel = userId;
+           // Subscribe to the new channel
+           if (!channelClients.has(channelId)) {
+             channelClients.set(channelId, new Set());
+           }
+           channelClients.get(channelId)?.add(ws);
+           subscribedChannel = channelId;
 
-          const pastMessages =
-            await messageService.getMessagesFromDB(channelId);
-          ws.send(
-            JSON.stringify({ type: 'pastMessages', message: pastMessages }),
-          );
-        } else if (type === 'offer' && userId) {
-          // Handle WebRTC offer (from a client)
-          const offer = parsedMessage.offer;
-          const peerConnection = new RTCPeerConnection();
+           // Send past messages to the client
+           const pastMessages =
+             await messageService.getMessagesFromDB(channelId);
+           ws.send(
+             JSON.stringify({ type: 'pastMessages', messages: pastMessages }),
+           );
+         } else if (type === 'offer' && userId) {
+           // Handle WebRTC offer (from a client)
+           const offer = parsedMessage.offer;
+           const peerConnection = new RTCPeerConnection();
 
-          // Set up ICE candidate handling
-          peerConnection.onicecandidate = event => {
-            if (event.candidate) {
-              ws.send(
-                JSON.stringify({
-                  type: 'candidate',
-                  candidate: event.candidate,
-                }),
-              );
-            }
-          };
+           // Set up ICE candidate handling
+           peerConnection.onicecandidate = event => {
+             if (event.candidate) {
+               ws.send(
+                 JSON.stringify({
+                   type: 'candidate',
+                   candidate: event.candidate,
+                 }),
+               );
+             }
+           };
 
-          // Handle remote stream
-          peerConnection.ontrack = event => {
-            // Broadcast the remote stream to other clients in the same channel
-            channelClients.get(userId)?.forEach(client => {
-              if (client !== ws && client.readyState === WebSocket.OPEN) {
-                client.send(
-                  JSON.stringify({
-                    type: 'remoteStream',
-                    stream: event.streams[0],
-                  }),
-                );
-              }
-            });
-          };
+           // Handle remote stream
+           peerConnection.ontrack = event => {
+             // Broadcast the remote stream to other clients in the same channel
+             channelClients.get(userId)?.forEach(client => {
+               if (client !== ws && client.readyState === WebSocket.OPEN) {
+                 client.send(
+                   JSON.stringify({
+                     type: 'remoteStream',
+                     stream: event.streams[0],
+                   }),
+                 );
+               }
+             });
+           };
 
-          // Set the remote offer and create an answer
-          await peerConnection.setRemoteDescription(
-            new RTCSessionDescription(offer),
-          );
+           // Set the remote offer and create an answer
+           await peerConnection.setRemoteDescription(
+             new RTCSessionDescription(offer),
+           );
 
-          const answer = await peerConnection.createAnswer();
-          await peerConnection.setLocalDescription(answer);
+           const answer = await peerConnection.createAnswer();
+           await peerConnection.setLocalDescription(answer);
 
-          // Send the answer back to the client that made the offer
-          ws.send(JSON.stringify({ type: 'answer', answer }));
+           // Send the answer back to the client that made the offer
+           ws.send(JSON.stringify({ type: 'answer', answer }));
 
-          // Store the peer connection to send ICE candidates
-          peerConnections.set(ws, peerConnection);
+           // Store the peer connection to send ICE candidates
+           peerConnections.set(ws, peerConnection);
 
-          // Broadcast the offer to all clients in the same channel
-          channelClients.get(userId)?.forEach(client => {
-            if (client !== ws && client.readyState === WebSocket.OPEN) {
-              client.send(
-                JSON.stringify({
-                  type: 'offer',
-                  offer,
-                }),
-              );
-            }
-          });
-        } else if (type === 'answer' && userId) {
-          // Handle WebRTC answer (from a client)
-          const answer = parsedMessage.answer;
-          const peerConnection = peerConnections.get(ws);
-          if (peerConnection) {
-            await peerConnection.setRemoteDescription(
-              new RTCSessionDescription(answer),
-            );
-          }
-        } else if (type === 'candidate' && userId) {
-          // Handle ICE candidate (from a client)
-          const candidate = parsedMessage.candidate;
-          const peerConnection = peerConnections.get(ws);
-          if (peerConnection && candidate) {
-            await peerConnection.addIceCandidate(
-              new RTCIceCandidate(candidate),
-            );
-          }
-        }
-      } catch (err: any) {
-        console.error('Error processing WebSocket message:', err.message);
-      }
+           // Broadcast the offer to all clients in the same channel
+           channelClients.get(userId)?.forEach(client => {
+             if (client !== ws && client.readyState === WebSocket.OPEN) {
+               client.send(
+                 JSON.stringify({
+                   type: 'offer',
+                   offer,
+                 }),
+               );
+             }
+           });
+         } else if (type === 'answer' && userId) {
+           // Handle WebRTC answer (from a client)
+           const answer = parsedMessage.answer;
+           const peerConnection = peerConnections.get(ws);
+           if (peerConnection) {
+             await peerConnection.setRemoteDescription(
+               new RTCSessionDescription(answer),
+             );
+           }
+         } else if (type === 'candidate' && userId) {
+           // Handle ICE candidate (from a client)
+           const candidate = parsedMessage.candidate;
+           const peerConnection = peerConnections.get(ws);
+           if (peerConnection && candidate) {
+             await peerConnection.addIceCandidate(
+               new RTCIceCandidate(candidate),
+             );
+           }
+         }
+       } catch (err: any) {
+         console.error('Error processing WebSocket message:', err.message);
+       }
     });
 
     // Handle client disconnections
