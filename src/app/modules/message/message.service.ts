@@ -68,6 +68,8 @@ const createMessageInDB = async (req: any) => {
   const senderId = req.user.id; // Sender's ID
   const receiverId = req.params.userId; // Receiver's ID
 
+  console.log({ senderId, receiverId, content });
+
   // Check if the sender has an active subscription
   const subscription = await prisma.subscription.findFirst({
     where: {
@@ -76,20 +78,20 @@ const createMessageInDB = async (req: any) => {
     },
   });
 
-  if (!subscription) {
-    // Count the messages sent by the user
-    const messageCount = await prisma.message.count({
-      where: { senderId },
-    });
+  // if (!subscription) {
+  //   // Count the messages sent by the user
+  //   const messageCount = await prisma.message.count({
+  //     where: { senderId },
+  //   });
 
-    // If the user has already sent one message, deny further messages
-    if (messageCount >= 1) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        'You need a subscription to send more messages.',
-      );
-    }
-  }
+  //   // If the user has already sent one message, deny further messages
+  //   if (messageCount >= 1) {
+  //     throw new AppError(
+  //       httpStatus.BAD_REQUEST,
+  //       'You need a subscription to send more messages.',
+  //     );
+  //   }
+  // }
 
   // Find or create the channel between the sender and receiver
   let channel = await prisma.channel.findUnique({
@@ -146,9 +148,29 @@ const createMessageInDB = async (req: any) => {
   return newMessage;
 };
 
+// const getMessagesFromDB = async (channelId: string) => {
+//   const message = await prisma.message.findMany({
+//     where: {
+//       channelId: channelId,
+//     },
+//     include: {
+//       receiver: {
+//         select: {
+//           id: true,
+//           email: true,
+//           role: true,
+//           status: true,
+//         },
+//       },
+//     },
+//   });
+
+//   return message;
+// };
 
 const getMessagesFromDB = async (channelId: string) => {
-  const message = await prisma.message.findMany({
+  console.log('Fetching messages for channelId:', channelId); // Log channelId
+  const messages = await prisma.message.findMany({
     where: {
       channelId: channelId,
     },
@@ -163,9 +185,10 @@ const getMessagesFromDB = async (channelId: string) => {
       },
     },
   });
-
-  return message;
+  console.log('Fetched messages:', messages); // Log fetched messages
+  return messages;
 };
+
 
 export const messageService = {
   createMessageInDB,

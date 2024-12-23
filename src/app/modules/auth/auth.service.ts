@@ -64,10 +64,9 @@ const loginUser = async (payload: {
     email: userData.email,
     role: userData.role,
     accessToken: accessToken,
+    accountSetup: userData.accountSetup,
   };
 };
-
-
 
 const logout = async (userId: string) => {
   try {
@@ -146,7 +145,6 @@ const createOtp = async (payload: { email: string }) => {
 
   return { otpData };
 };
-
 
 const verifyOtp = async (payload: { email: string; otp: number }) => {
   // Check if the user exists
@@ -245,6 +243,7 @@ const socialLogin = async (payload: any) => {
         email: user.email,
         role: user.role,
         accessToken: accessToken,
+        accountSetup: user.accountSetup,
       };
     } else {
       // If user does not exist, create a new user and associated profile
@@ -259,6 +258,7 @@ const socialLogin = async (payload: any) => {
               facebookId: payload.facebookId || null,
               role: payload.role || 'USER', // Default role is 'user'
               fcpmToken: payload.fcpmToken || null,
+              accountSetup: false,
             },
           });
 

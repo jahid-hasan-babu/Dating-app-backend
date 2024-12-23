@@ -166,7 +166,7 @@ async function main() {
     ws.on('message', async message => {
       try {
         const parsedMessage = JSON.parse(message.toString());
-        const { type, userId } = parsedMessage;
+        const { type, userId, channelId } = parsedMessage;
 
         if (type === 'subscribe') {
           if (!userId) {
@@ -192,10 +192,10 @@ async function main() {
           channelClients.get(userId)?.add(ws);
           subscribedChannel = userId;
 
-          // Fetch and send past messages
-          const pastMessages = await messageService.getMessagesFromDB(userId);
+          const pastMessages =
+            await messageService.getMessagesFromDB(channelId);
           ws.send(
-            JSON.stringify({ type: 'pastMessages', messages: pastMessages }),
+            JSON.stringify({ type: 'pastMessages', message: pastMessages }),
           );
         } else if (type === 'offer' && userId) {
           // Handle WebRTC offer (from a client)
