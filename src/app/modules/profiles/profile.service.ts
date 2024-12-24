@@ -6,10 +6,55 @@ import httpStatus from 'http-status';
 import AppError from '../../errors/AppError';
 
 
-const getAllProfiles = async (req: Request) => {
+// const getAllProfiles = async (userId: string, req: Request) => {
+//   const { search } = req.query;
+//   const searchFilters = search ? searchFilter(search as string) : {};
+
+//   const result = await prisma.profile.findMany({
+//     where: searchFilters,
+//     select: {
+//       id: true,
+//       userId: true,
+//       fullName: true,
+//       age: true,
+//       profileImage: true,
+//       isVerified: true,
+//       country: true,
+//       flag: true,
+//       city: true,
+//       user: {
+//         select: {
+//           status: true, // Include the status field from the user model
+//         },
+//       },
+//     },
+//   });
+
+//   // Handle cases where user is null
+//   return result.map(profile => ({
+//     ...profile,
+//     status: profile.user?.status || null,
+//   }));
+// };
+
+const getAllProfiles = async (userId: string, req: Request) => {
   const { search } = req.query;
   const searchFilters = search ? searchFilter(search as string) : {};
 
+  // Fetch the favorited user IDs for the given userId
+  const favoriteUsers = await prisma.favorite.findMany({
+    where: {
+      userID: userId, // assuming userId is the correct property name
+    },
+    select: { favoritedUserId: true },
+  });
+
+  // Extract the favoritedUserId values into a Set for quick lookup
+  const favoritedUserIds = new Set(
+    favoriteUsers.map(fav => fav.favoritedUserId),
+  );
+
+  // Fetch profiles with additional isFavorite field
   const result = await prisma.profile.findMany({
     where: searchFilters,
     select: {
@@ -30,12 +75,14 @@ const getAllProfiles = async (req: Request) => {
     },
   });
 
-  // Handle cases where user is null
+  // Map through the results to add the isFavorite field
   return result.map(profile => ({
     ...profile,
     status: profile.user?.status || null,
+    isFavorite: favoritedUserIds.has(profile.userId), // Check if userId is in the favorited list
   }));
 };
+
 
 const getSingleProfile = async (userId: string) => {
   const result = await prisma.profile.findUnique({
