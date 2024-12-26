@@ -64,6 +64,98 @@ import { channelClients } from '../../../server';
 //   return newMessage;
 // };
 
+// const createMessageInDB = async (
+//   usersenderId: string,
+//   userId: string,
+//   req: any,
+// ) => {
+//   const { content } = req.body; // Assuming `req.body.content` holds the message content
+//   const senderId = usersenderId;
+//   const receiverId = userId; // ID of the receiver
+
+//   // Find or create the channel between the sender and receiver
+// let channel = await prisma.channel.findFirst({
+//   where: {
+//     OR: [
+//       {
+//         participant1Id: senderId,
+//         participant2Id: receiverId,
+//       },
+//       {
+//         participant1Id: receiverId,
+//         participant2Id: senderId,
+//       },
+//     ],
+//   },
+// });
+
+//   if (!channel) {
+//     channel = await prisma.channel.create({
+//       data: {
+//         participant1Id: senderId,
+//         participant2Id: receiverId,
+//       },
+//     });
+//   }
+
+//   // Create a new message linked to the channel
+//   const newMessage = await prisma.message.create({
+//     data: {
+//       content, // Add message content
+//       senderId, // Link to the sender
+//       receiverId, // Link to the receiver
+//       channelId: channel.id, // Link to the channel
+//     },
+//   });
+
+//   const allMessage = await prisma.message.findMany({
+//     where: {
+//       receiverId,
+//       senderId,
+//     },
+//   });
+
+//   // Fetch sender's profile (e.g., full name) for notification
+//   const senderProfile = await prisma.profile.findUnique({
+//     where: { userId: senderId },
+//     select: { fullName: true }, // Fetch only the full name
+//   });
+
+//   // Prepare notification data
+//   const notificationData = {
+//     title: 'New Message Received',
+//     body: `${senderProfile?.fullName || 'Someone'} has sent you a new message.`,
+//   };
+
+//   // Send a notification to the receiver
+//   try {
+//     await notificationServices.sendSingleNotification({
+//       params: { userId: receiverId }, // Receiver ID
+//       body: notificationData, // Notification content
+//     });
+//   } catch (error: any) {
+//     console.error('Failed to send notification:', error.message);
+//     // Log or handle the error as needed
+//   }
+
+//   // Broadcast the new message to all WebSocket clients subscribed to the channel
+//   const connectedClients = channelClients.get(channel.id) || new Set();
+
+//   const messagePayload = {
+//     type: 'newMessage',
+//     channelId: channel.id,
+//     data: allMessage,
+//   };
+
+//   connectedClients.forEach((client: any) => {
+//     if (client.readyState === WebSocket.OPEN) {
+//       client.send(JSON.stringify(messagePayload));
+//     }
+//   });
+
+//   return allMessage;
+// };
+
 const createMessageInDB = async (
   usersenderId: string,
   userId: string,
@@ -74,20 +166,20 @@ const createMessageInDB = async (
   const receiverId = userId; // ID of the receiver
 
   // Find or create the channel between the sender and receiver
-let channel = await prisma.channel.findFirst({
-  where: {
-    OR: [
-      {
-        participant1Id: senderId,
-        participant2Id: receiverId,
-      },
-      {
-        participant1Id: receiverId,
-        participant2Id: senderId,
-      },
-    ],
-  },
-});
+  let channel = await prisma.channel.findFirst({
+    where: {
+      OR: [
+        {
+          participant1Id: senderId,
+          participant2Id: receiverId,
+        },
+        {
+          participant1Id: receiverId,
+          participant2Id: senderId,
+        },
+      ],
+    },
+  });
 
   if (!channel) {
     channel = await prisma.channel.create({
@@ -138,6 +230,14 @@ let channel = await prisma.channel.findFirst({
     // Log or handle the error as needed
   }
 
+  // Update unread message count
+  const unreadMessagesCount = await prisma.message.count({
+    where: {
+      receiverId,
+      isRead: false,
+    },
+  });
+
   // Broadcast the new message to all WebSocket clients subscribed to the channel
   const connectedClients = channelClients.get(channel.id) || new Set();
 
@@ -145,6 +245,7 @@ let channel = await prisma.channel.findFirst({
     type: 'newMessage',
     channelId: channel.id,
     data: allMessage,
+    unreadCount: unreadMessagesCount, // Include unread message count
   };
 
   connectedClients.forEach((client: any) => {
@@ -155,6 +256,7 @@ let channel = await prisma.channel.findFirst({
 
   return allMessage;
 };
+
 
 const getMessagesFromDB = async (channelId: string) => {
   try {
@@ -170,6 +272,50 @@ const getMessagesFromDB = async (channelId: string) => {
     throw err;
   }
 };
+
+// messageService.ts
+
+
+// export const markMessagesAsRead = async (userId: string, channelId: string) => {
+//   try {
+//     // Mark all messages in the channel as read for the user
+//     await prisma.message.updateMany({
+//       where: {
+//         receiverId: userId,
+//         channelId: channelId,
+//         isRead: false,  // Only mark unread messages as read
+//       },
+//       data: {
+//         isRead: true, // Update the message to be read
+//       },
+//     });
+//   } catch (error) {
+//     console.error('Error marking messages as read:', error);
+//     throw new Error('Error marking messages as read');
+//   }
+// };
+
+
+const markMessagesAsRead = async (userId: string, channelId: string) => {
+  try {
+    const updatedMessages = await prisma.message.updateMany({
+      where: {
+        receiverId: userId,
+        channelId: channelId,
+        isRead: false, // Only update unread messages
+      },
+      data: {
+        isRead: true, // Mark as read
+      },
+    });
+
+    return updatedMessages;
+  } catch (error) {
+    console.error('Error marking messages as read:', error);
+    throw new Error('Failed to mark messages as read');
+  }
+};
+
 
 // const getMessagesFromDB = async (channelId: string) => {
 //   try {
@@ -268,5 +414,6 @@ const getMyChat = async (userId: string) => {
 export const messageService = {
   createMessageInDB,
   getMessagesFromDB,
+  markMessagesAsRead,
   getMyChat,
 };

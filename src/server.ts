@@ -139,12 +139,10 @@ import { WebSocketServer, WebSocket } from 'ws';
 import app from './app';
 import config from './config';
 import { messageService } from './app/modules/message/message.service';
+import prisma from './app/utils/prisma';
 
 // Store WebSocket connections per userId (channel)
 const channelClients = new Map<string, Set<WebSocket>>();
-
-// Store peer connections for signaling (to manage offer/answer/candidate)
-const peerConnections = new Map<WebSocket, RTCPeerConnection>();
 
 let wss: WebSocketServer;
 
@@ -164,119 +162,179 @@ async function main() {
 
     // Listen for messages
     ws.on('message', async message => {
-       try {
-         const parsedMessage = JSON.parse(message.toString());
-         const { type, userId, channelId } = parsedMessage;
+      try {
+        const parsedMessage = JSON.parse(message.toString());
+        const { type, userId, channelId, offer, answer, candidate } =
+          parsedMessage;
 
-         if (type === 'subscribe') {
-           if (!channelId) {
-             ws.send(
-               JSON.stringify({ error: 'ChannelId is required to subscribe' }),
-             );
-             return;
-           }
+        // Handle subscription to a channel
+        if (type === 'subscribe') {
+          if (!channelId) {
+            ws.send(
+              JSON.stringify({ error: 'ChannelId is required to subscribe' }),
+            );
+            return;
+          }
 
-           // Unsubscribe from the previous channel if necessary
-           if (subscribedChannel) {
-             const previousSet = channelClients.get(subscribedChannel);
-             previousSet?.delete(ws);
-             if (previousSet?.size === 0) {
-               channelClients.delete(subscribedChannel);
-             }
-           }
+          // Unsubscribe from the previous channel if necessary
+          if (subscribedChannel) {
+            const previousSet = channelClients.get(subscribedChannel);
+            previousSet?.delete(ws);
+            if (previousSet?.size === 0) {
+              channelClients.delete(subscribedChannel);
+            }
+          }
 
-           // Subscribe to the new channel
-           if (!channelClients.has(channelId)) {
-             channelClients.set(channelId, new Set());
-           }
-           channelClients.get(channelId)?.add(ws);
-           subscribedChannel = channelId;
+          // Subscribe to the new channel
+          if (!channelClients.has(channelId)) {
+            channelClients.set(channelId, new Set());
+          }
+          channelClients.get(channelId)?.add(ws);
+          subscribedChannel = channelId;
 
-           // Send past messages to the client
-           const pastMessages =
-             await messageService.getMessagesFromDB(channelId);
-           ws.send(
-             JSON.stringify({ type: 'pastMessages', messages: pastMessages }),
-           );
-         } else if (type === 'offer' && userId) {
-           // Handle WebRTC offer (from a client)
-           const offer = parsedMessage.offer;
-           const peerConnection = new RTCPeerConnection();
+          // Mark past messages as read when they are retrieved
+          if (userId) {
+            await messageService.markMessagesAsRead(userId, channelId);
+          }
 
-           // Set up ICE candidate handling
-           peerConnection.onicecandidate = event => {
-             if (event.candidate) {
-               ws.send(
-                 JSON.stringify({
-                   type: 'candidate',
-                   candidate: event.candidate,
-                 }),
-               );
-             }
-           };
+          // Send past messages to the client
+          const pastMessages =
+            await messageService.getMessagesFromDB(channelId);
+          ws.send(
+            JSON.stringify({ type: 'pastMessages', messages: pastMessages }),
+          );
 
-           // Handle remote stream
-           peerConnection.ontrack = event => {
-             // Broadcast the remote stream to other clients in the same channel
-             channelClients.get(userId)?.forEach(client => {
-               if (client !== ws && client.readyState === WebSocket.OPEN) {
-                 client.send(
-                   JSON.stringify({
-                     type: 'remoteStream',
-                     stream: event.streams[0],
-                   }),
-                 );
-               }
-             });
-           };
+          // Send updated unread message count after marking messages as read
+          const unreadMessagesCount = await prisma.message.count({
+            where: {
+              receiverId: userId,
+              isRead: false,
+            },
+          });
 
-           // Set the remote offer and create an answer
-           await peerConnection.setRemoteDescription(
-             new RTCSessionDescription(offer),
-           );
+          ws.send(
+            JSON.stringify({
+              type: 'unreadCountUpdate',
+              unreadCount: unreadMessagesCount,
+            }),
+          );
+        }
 
-           const answer = await peerConnection.createAnswer();
-           await peerConnection.setLocalDescription(answer);
+        // Handle receiving a new message
+        else if (type === 'newMessage' && userId && channelId) {
+          const newMessage = await messageService.createMessageInDB(
+            userId,
+            channelId,
+            parsedMessage,
+          );
 
-           // Send the answer back to the client that made the offer
-           ws.send(JSON.stringify({ type: 'answer', answer }));
+          // Send the unread message count
+          const unreadMessagesCount = await prisma.message.count({
+            where: {
+              receiverId: userId,
+              isRead: false,
+            },
+          });
 
-           // Store the peer connection to send ICE candidates
-           peerConnections.set(ws, peerConnection);
+          const messagePayload = {
+            type: 'newMessage',
+            channelId: channelId,
+            data: newMessage,
+            unreadCount: unreadMessagesCount, // Include unread count
+          };
 
-           // Broadcast the offer to all clients in the same channel
-           channelClients.get(userId)?.forEach(client => {
-             if (client !== ws && client.readyState === WebSocket.OPEN) {
-               client.send(
-                 JSON.stringify({
-                   type: 'offer',
-                   offer,
-                 }),
-               );
-             }
-           });
-         } else if (type === 'answer' && userId) {
-           // Handle WebRTC answer (from a client)
-           const answer = parsedMessage.answer;
-           const peerConnection = peerConnections.get(ws);
-           if (peerConnection) {
-             await peerConnection.setRemoteDescription(
-               new RTCSessionDescription(answer),
-             );
-           }
-         } else if (type === 'candidate' && userId) {
-           // Handle ICE candidate (from a client)
-           const candidate = parsedMessage.candidate;
-           const peerConnection = peerConnections.get(ws);
-           if (peerConnection && candidate) {
-             await peerConnection.addIceCandidate(
-               new RTCIceCandidate(candidate),
-             );
-           }
-         }
-       } catch (err: any) {
-         console.error('Error processing WebSocket message:', err.message);
-       }
+          // Broadcast message to all subscribers of the channel
+          channelClients.get(channelId)?.forEach(client => {
+            if (client !== ws && client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify(messagePayload));
+            }
+          });
+        }
+
+        // Handle WebRTC offer (client is initiating a connection)
+        else if (type === 'offer' && userId && channelId && offer) {
+          // Relay the offer to other peers in the same channel
+          channelClients.get(channelId)?.forEach(client => {
+            if (client !== ws && client.readyState === WebSocket.OPEN) {
+              client.send(
+                JSON.stringify({
+                  type: 'offer',
+                  from: userId,
+                  offer: offer,
+                }),
+              );
+            }
+          });
+        }
+
+        // Handle WebRTC answer (client is responding to an offer)
+        else if (type === 'answer' && userId && channelId && answer) {
+          // Relay the answer to the peer who made the offer
+          channelClients.get(channelId)?.forEach(client => {
+            if (client !== ws && client.readyState === WebSocket.OPEN) {
+              client.send(
+                JSON.stringify({
+                  type: 'answer',
+                  from: userId,
+                  answer: answer,
+                }),
+              );
+            }
+          });
+        }
+
+        // Handle WebRTC ICE candidate
+        else if (type === 'candidate' && userId && channelId && candidate) {
+          // Relay the ICE candidate to the other peer(s) in the channel
+          channelClients.get(channelId)?.forEach(client => {
+            if (client !== ws && client.readyState === WebSocket.OPEN) {
+              client.send(
+                JSON.stringify({
+                  type: 'candidate',
+                  from: userId,
+                  candidate: candidate,
+                }),
+              );
+            }
+          });
+        }
+
+        // Handle marking messages as read
+        else if (type === 'markAsRead' && userId && channelId) {
+          // Mark messages as read in the database
+          await messageService.markMessagesAsRead(userId, channelId);
+
+          // Get the updated unread message count
+          const unreadMessagesCount = await prisma.message.count({
+            where: {
+              receiverId: userId,
+              isRead: false,
+            },
+          });
+
+          // Send the updated unread count to the client
+          ws.send(
+            JSON.stringify({
+              type: 'unreadCountUpdate',
+              unreadCount: unreadMessagesCount,
+            }),
+          );
+
+          // Notify all subscribers about the unread count update
+          channelClients.get(channelId)?.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(
+                JSON.stringify({
+                  type: 'unreadCountUpdate',
+                  unreadCount: unreadMessagesCount,
+                }),
+              );
+            }
+          });
+        }
+      } catch (err: any) {
+        console.error('Error processing WebSocket message:', err.message);
+      }
     });
 
     // Handle client disconnections
@@ -288,14 +346,6 @@ async function main() {
           channelClients.delete(subscribedChannel);
         }
       }
-
-      // Cleanup peer connection if it exists
-      const peerConnection = peerConnections.get(ws);
-      if (peerConnection) {
-        peerConnection.close();
-        peerConnections.delete(ws);
-      }
-
       console.log('WebSocket client disconnected!');
     });
   });
@@ -303,5 +353,4 @@ async function main() {
 
 main();
 
-export { wss, channelClients, peerConnections };
-
+export { wss, channelClients };
