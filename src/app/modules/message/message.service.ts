@@ -2,7 +2,6 @@ import prisma from '../../utils/prisma';
 import AppError from '../../errors/AppError';
 import httpStatus from 'http-status';
 import { notificationServices } from '../notifications/notification.service';
-import { User } from '@prisma/client';
 import { channelClients } from '../../../server';
 
 // const createMessageInDB = async (req: any) => {

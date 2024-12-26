@@ -204,6 +204,8 @@ enum GenderStatus {
 enum RelationStatus {
   SINGLE
   MARRIED
+  INRELATIONSHIP
+  COMPLICATED
 }
 
 enum veriedStatus {
