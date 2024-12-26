@@ -258,20 +258,20 @@ const createMessageInDB = async (
 };
 
 
-const getMessagesFromDB = async (channelId: string) => {
-  try {
-    const messages = await prisma.message.findMany({
-      where: {
-        channelId: channelId,
-      },
-    });
+// const getMessagesFromDB = async (channelId: string) => {
+//   try {
+//     const messages = await prisma.message.findMany({
+//       where: {
+//         channelId: channelId,
+//       },
+//     });
 
-    return messages;
-  } catch (err) {
-    console.error('Error fetching messages:', err);
-    throw err;
-  }
-};
+//     return messages;
+//   } catch (err) {
+//     console.error('Error fetching messages:', err);
+//     throw err;
+//   }
+// };
 
 // messageService.ts
 
@@ -317,36 +317,36 @@ const markMessagesAsRead = async (userId: string, channelId: string) => {
 };
 
 
-// const getMessagesFromDB = async (channelId: string) => {
-//   try {
-//     const messages = await prisma.message.findMany({
-//       where: {
-//         channelId: channelId,
-//       },
-//       include: {
-//         receiver: {
-//           select: {
-//             id: true,
-//             email: true,
-//             role: true,
-//             status: true,
-//           },
-//         },
-//       },
-//     });
+const getMessagesFromDB = async (channelId: string) => {
+  try {
+    const messages = await prisma.message.findMany({
+      where: {
+        channelId: channelId,
+      },
+      include: {
+        receiver: {
+          select: {
+            id: true,
+            email: true,
+            role: true,
+            status: true,
+          },
+        },
+      },
+    });
 
-//     // // Handle case when no receiver is found for some messages
-//     // const filteredMessages = messages.filter(
-//     //   message => message.receiver !== null,
-//     // );
+    // // Handle case when no receiver is found for some messages
+    // const filteredMessages = messages.filter(
+    //   message => message.receiver !== null,
+    // );
 
-//     // console.log('Fetched messages:', filteredMessages);
-//     return messages;
-//   } catch (error: any) {
-//     console.error('Error fetching messages:', error.message);
-//     throw error; // Re-throw to handle it elsewhere
-//   }
-// };
+    // console.log('Fetched messages:', filteredMessages);
+    return messages;
+  } catch (error: any) {
+    console.error('Error fetching messages:', error.message);
+    throw error; // Re-throw to handle it elsewhere
+  }
+};
 
 const getMyChat = async (userId: string) => {
   // Check if the user exists by verifying they have sent at least one message

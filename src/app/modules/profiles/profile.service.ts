@@ -89,6 +89,8 @@ const getSingleProfile = async (userId: string) => {
       userId: userId,
     },
     select: {
+      id: true,
+      userId: true,
       fullName: true,
       username: true,
       profileImage: true,
