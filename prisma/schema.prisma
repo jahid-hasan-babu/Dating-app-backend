@@ -113,6 +113,8 @@ model Message {
   @@map("messages")
 }
 
+
+
 model Channel {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
   participant1Id String   @db.ObjectId

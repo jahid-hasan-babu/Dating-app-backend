@@ -378,6 +378,219 @@ async function main() {
   wss = new WebSocketServer({ server });
 
   // Handle WebSocket connections
+  // wss.on('connection', ws => {
+  //   console.log('New WebSocket connection established!');
+
+  //   let subscribedChannel: string | null = null; // Track the client's subscribed channel
+
+  //   // Listen for messages
+  //   ws.on('message', async message => {
+  //     try {
+  //       const parsedMessage = JSON.parse(message.toString());
+  //       const { type, userId, channelId, reciverId, content, offer, answer, candidate } =
+  //         parsedMessage;
+
+  //       // Handle subscription to a channel
+  //       if (type === 'subscribe') {
+  //         if (!channelId) {
+  //           ws.send(
+  //             JSON.stringify({ error: 'ChannelId is required to subscribe' }),
+  //           );
+  //           return;
+  //         }
+
+  //         // Unsubscribe from the previous channel if necessary
+  //         if (subscribedChannel) {
+  //           const previousSet = channelClients.get(subscribedChannel);
+  //           previousSet?.delete(ws);
+  //           if (previousSet?.size === 0) {
+  //             channelClients.delete(subscribedChannel);
+  //           }
+  //         }
+
+  //         // Subscribe to the new channel
+  //         if (!channelClients.has(channelId)) {
+  //           channelClients.set(channelId, new Set());
+  //         }
+  //         channelClients.get(channelId)?.add(ws);
+  //         subscribedChannel = channelId;
+
+  //         // Mark past messages as read when they are retrieved
+  //         if (userId) {
+  //           await messageService.markMessagesAsRead(userId, channelId);
+  //         }
+
+  //         // Send past messages to the client
+  //         const pastMessages =
+  //           await messageService.getMessagesFromDB(channelId);
+  //         ws.send(
+  //           JSON.stringify({ type: 'pastMessages', messages: pastMessages }),
+  //         );
+
+  //         // Send updated unread message count after marking messages as read
+  //         const unreadMessagesCount = await prisma.message.count({
+  //           where: {
+  //             receiverId: userId,
+  //             isRead: false,
+  //           },
+  //         });
+
+  //         ws.send(
+  //           JSON.stringify({
+  //             type: 'unreadCountUpdate',
+  //             unreadCount: unreadMessagesCount,
+  //           }),
+  //         );
+  //       }
+
+  //       // Handle receiving a new message
+  //       else if (type === 'newMessage' && userId && reciverId && content) {
+  //         try {
+  //           // Step 1: Create the message in the database
+  //           const newMessage = await createMessageInDB(
+  //             userId,
+  //             reciverId,
+  //             parsedMessage,
+  //           );
+
+  //           // Step 2: Prepare the message payload
+  //           const messagePayload = {
+  //             type: 'newMessage',
+  //             data: newMessage, // The actual message returned from createMessageInDB
+  //           };
+
+  //           // Step 3: Fetch past messages for the channel (if needed)
+  //           const pastMessages =
+  //             await messageService.getMessagesFromDB(channelId);
+  //           console.log(pastMessages); // Debugging output
+
+  //           // Step 4: Broadcast the new message to all connected clients in the channel
+  //           // Step 4: Broadcast the new message to all connected clients in the channel
+  //           channelClients.get(channelId)?.forEach(client => {
+  //             if (client !== ws && client.readyState === WebSocket.OPEN) {
+  //               // Send the new message to all other clients in the channel
+  //               client.send(JSON.stringify(messagePayload)); // Broadcast the new message
+  //             }
+  //           });
+
+  //           // Optionally: Log or debug to verify message creation and broadcasting
+  //           console.log(`Message sent to channel ${channelId}:`, newMessage);
+
+  //           // Step 5: Return the past messages to the client (or handle broadcasting here)
+  //           // Send the past messages (including the newly added message) back to the client who sent it
+  //           ws.send(
+  //             JSON.stringify({
+  //               type: 'pastMessages',
+  //               data: pastMessages, // Send all past messages (including the new one)
+  //             }),
+  //           );
+
+  //           // Return past messages to the client
+  //           return pastMessages;
+  //         } catch (error) {
+  //           console.error('Error processing new message:', error);
+  //         }
+  //       }
+
+  //       // Handle WebRTC offer (client is initiating a connection)
+  //       else if (type === 'offer' && userId && channelId && offer) {
+  //         // Relay the offer to other peers in the same channel
+  //         channelClients.get(channelId)?.forEach(client => {
+  //           if (client !== ws && client.readyState === WebSocket.OPEN) {
+  //             client.send(
+  //               JSON.stringify({
+  //                 type: 'offer',
+  //                 from: userId,
+  //                 offer: offer,
+  //               }),
+  //             );
+  //           }
+  //         });
+  //       }
+
+  //       // Handle WebRTC answer (client is responding to an offer)
+  //       else if (type === 'answer' && userId && channelId && answer) {
+  //         // Relay the answer to the peer who made the offer
+  //         channelClients.get(channelId)?.forEach(client => {
+  //           if (client !== ws && client.readyState === WebSocket.OPEN) {
+  //             client.send(
+  //               JSON.stringify({
+  //                 type: 'answer',
+  //                 from: userId,
+  //                 answer: answer,
+  //               }),
+  //             );
+  //           }
+  //         });
+  //       }
+
+  //       // Handle WebRTC ICE candidate
+  //       else if (type === 'candidate' && userId && channelId && candidate) {
+  //         // Relay the ICE candidate to the other peer(s) in the channel
+  //         channelClients.get(channelId)?.forEach(client => {
+  //           if (client !== ws && client.readyState === WebSocket.OPEN) {
+  //             client.send(
+  //               JSON.stringify({
+  //                 type: 'candidate',
+  //                 from: userId,
+  //                 candidate: candidate,
+  //               }),
+  //             );
+  //           }
+  //         });
+  //       }
+
+  //       // Handle marking messages as read
+  //       else if (type === 'markAsRead' && userId && channelId) {
+  //         // Mark messages as read in the database
+  //         await messageService.markMessagesAsRead(userId, channelId);
+
+  //         // Get the updated unread message count
+  //         const unreadMessagesCount = await prisma.message.count({
+  //           where: {
+  //             receiverId: userId,
+  //             isRead: false,
+  //           },
+  //         });
+
+  //         // Send the updated unread count to the client
+  //         ws.send(
+  //           JSON.stringify({
+  //             type: 'unreadCountUpdate',
+  //             unreadCount: unreadMessagesCount,
+  //           }),
+  //         );
+
+  //         // Notify all subscribers about the unread count update
+  //         channelClients.get(channelId)?.forEach(client => {
+  //           if (client.readyState === WebSocket.OPEN) {
+  //             client.send(
+  //               JSON.stringify({
+  //                 type: 'unreadCountUpdate',
+  //                 unreadCount: unreadMessagesCount,
+  //               }),
+  //             );
+  //           }
+  //         });
+  //       }
+  //     } catch (err: any) {
+  //       console.error('Error processing WebSocket message:', err.message);
+  //     }
+  //   });
+
+  //   // Handle client disconnections
+  //   ws.on('close', () => {
+  //     if (subscribedChannel) {
+  //       const clientsInChannel = channelClients.get(subscribedChannel);
+  //       clientsInChannel?.delete(ws);
+  //       if (clientsInChannel?.size === 0) {
+  //         channelClients.delete(subscribedChannel);
+  //       }
+  //     }
+  //     console.log('WebSocket client disconnected!');
+  //   });
+  // });
+
   wss.on('connection', ws => {
     console.log('New WebSocket connection established!');
 
@@ -387,8 +600,16 @@ async function main() {
     ws.on('message', async message => {
       try {
         const parsedMessage = JSON.parse(message.toString());
-        const { type, userId, channelId, reciverId, content, offer, answer, candidate } =
-          parsedMessage;
+        const {
+          type,
+          userId,
+          channelId,
+          reciverId,
+          content,
+          offer,
+          answer,
+          candidate,
+        } = parsedMessage;
 
         // Handle subscription to a channel
         if (type === 'subscribe') {
@@ -456,19 +677,36 @@ async function main() {
             // Step 2: Prepare the message payload
             const messagePayload = {
               type: 'newMessage',
-              data: newMessage, // This should be the actual message returned from createMessageInDB
+              data: newMessage, // The actual message returned from createMessageInDB
             };
 
-            // Step 3: Fetch past messages for the channel
+            // Step 3: Fetch past messages for the channel (if needed)
             const pastMessages =
               await messageService.getMessagesFromDB(channelId);
             console.log(pastMessages); // Debugging output
 
+            // Step 4: Broadcast the new message to all connected clients in the channel
+            channelClients.get(channelId)?.forEach(client => {
+              if (client !== ws && client.readyState === WebSocket.OPEN) {
+                // Send the new message to all other clients in the channel
+                client.send(JSON.stringify(messagePayload)); // Broadcast the new message
+              }
+            });
+
             // Optionally: Log or debug to verify message creation and broadcasting
             console.log(`Message sent to channel ${channelId}:`, newMessage);
 
-            // Return the past messages to the client (or handle broadcasting here)
-            return pastMessages; // This is where you might send past messages back to the client
+            // Step 5: Return the past messages to the client (or handle broadcasting here)
+            // Send the past messages (including the newly added message) back to the client who sent it
+            ws.send(
+              JSON.stringify({
+                type: 'pastMessages',
+                data: pastMessages, // Send all past messages (including the new one)
+              }),
+            );
+
+            // Return past messages to the client
+            return pastMessages;
           } catch (error) {
             console.error('Error processing new message:', error);
           }
