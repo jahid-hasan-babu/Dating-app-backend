@@ -24,14 +24,47 @@ model User {
   updatedAt        DateTime        @updatedAt
   fcpmToken        String?
   profile          Profile?
-  sentMessages     Message[]       @relation("SentMessages")
-  receivedMessages Message[]       @relation("ReceivedMessages")
-  channelsAsUser1  Channel[]       @relation("UserChannel1")
-  channelsAsUser2  Channel[]       @relation("UserChannel2")
+   // Relationships
+  conversations1 Conversation[] @relation("User1Conversations")
+  conversations2 Conversation[] @relation("User2Conversations")
+  messages       Message[]      @relation("UserMessages")
   notifications    Notifications[] @relation("Notifications")
 
   @@map("users")
 }
+
+model Conversation {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  user1Id   String    @db.ObjectId
+  user2Id   String    @db.ObjectId
+  messages  Message[] @relation("ConversationMessages")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relationships
+  user1 User @relation("User1Conversations", fields: [user1Id], references: [id])
+  user2 User @relation("User2Conversations", fields: [user2Id], references: [id])
+
+  @@map("conversations")
+}
+
+model Message {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  conversationId String   @db.ObjectId
+  senderId       String   @db.ObjectId
+  receiverId     String   @db.ObjectId
+  content        String
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relationships
+  sender       User         @relation("UserMessages", fields: [senderId], references: [id])
+  conversation Conversation @relation("ConversationMessages", fields: [conversationId], references: [id])
+
+  @@map("messages")
+}
+
 
 model Otp {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -95,40 +128,40 @@ model Notifications {
   user       User     @relation(fields: [receiverId], references: [id], name: "Notifications")
 }
 
-model Message {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  content    String?
-  senderId   String   @db.ObjectId
-  receiverId String   @db.ObjectId
-  replyId    String?  @db.ObjectId
-  isRead     Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+// model Message {
+//   id         String   @id @default(auto()) @map("_id") @db.ObjectId
+//   content    String?
+//   senderId   String   @db.ObjectId
+//   receiverId String   @db.ObjectId
+//   replyId    String?  @db.ObjectId
+//   isRead     Boolean  @default(false)
+//   createdAt  DateTime @default(now())
+//   updatedAt  DateTime @updatedAt
 
-  sender    User    @relation("SentMessages", fields: [senderId], references: [id])
-  receiver  User    @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  channelId String  @db.ObjectId
-  channel   Channel @relation(fields: [channelId], references: [id])
+//   sender    User    @relation("SentMessages", fields: [senderId], references: [id])
+//   receiver  User    @relation("ReceivedMessages", fields: [receiverId], references: [id])
+//   channelId String  @db.ObjectId
+//   channel   Channel @relation(fields: [channelId], references: [id])
 
-  @@map("messages")
-}
+//   @@map("messages")
+// }
 
 
 
-model Channel {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  participant1Id String   @db.ObjectId
-  participant2Id String   @db.ObjectId
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+// model Channel {
+//   id             String   @id @default(auto()) @map("_id") @db.ObjectId
+//   participant1Id String   @db.ObjectId
+//   participant2Id String   @db.ObjectId
+//   createdAt      DateTime @default(now())
+//   updatedAt      DateTime @updatedAt
 
-  participant1 User      @relation("UserChannel1", fields: [participant1Id], references: [id])
-  participant2 User      @relation("UserChannel2", fields: [participant2Id], references: [id])
-  messages     Message[]
+//   participant1 User      @relation("UserChannel1", fields: [participant1Id], references: [id])
+//   participant2 User      @relation("UserChannel2", fields: [participant2Id], references: [id])
+//   messages     Message[]
 
-  @@unique([participant1Id, participant2Id])
-  @@map("channels")
-}
+//   @@unique([participant1Id, participant2Id])
+//   @@map("channels")
+// }
 
 enum ChannelType {
   PRIVATE

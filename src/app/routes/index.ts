@@ -8,6 +8,7 @@ import { Planrouters } from '../modules/plan/plan.routes';
 import { PaymentRouters } from '../modules/payment/payment.routes';
 import { Messagerouters } from '../modules/message/message.routes';
 import { notificationsRoute } from '../modules/notifications/notification.routes';
+import { ChatRoutes } from '../modules/chat/chat.route';
 
 const router = express.Router();
 
@@ -43,7 +44,7 @@ const moduleRoutes = [
   },
   {
     path: '/messages',
-    route: Messagerouters,
+    route: ChatRoutes,
   },
   {
     path: '/notifications',
