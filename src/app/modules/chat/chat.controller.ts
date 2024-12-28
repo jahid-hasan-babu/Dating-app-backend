@@ -107,7 +107,7 @@ const deleteConversion = catchAsync(async (req: Request, res: Response) => {
 
 const getMyChat = catchAsync(
   async (req: Request & { user?: any }, res: Response) => {
-    const userId = req.body.id;
+    const userId = req.user.id;
     const result = await chatServices.getMyChat(userId);
     sendResponse(res, {
       statusCode: httpStatus.OK,

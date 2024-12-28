@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { ChatControllers } from './chat.controller';
 import auth from '../../middlewares/auth';
 
+
+
 const router = Router();
 
 // Create a new chatroom (conversation)

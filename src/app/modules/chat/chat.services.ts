@@ -185,68 +185,130 @@ const markMessagesAsRead = async (userId: string, chatroomId: string) => {
   });
 };
 
+// const getMyChat = async (userId: string) => {
+//   // Step 1: Check if the user exists by verifying they have sent at least one message
+//   const existingUser = await prisma.message.findFirst({
+//     where: {
+//       senderId: userId,
+//     },
+//   });
+
+//   if (!existingUser) {
+//     throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+//   }
+
+//   // Step 2: Fetch all distinct receiverIds the user has interacted with
+//   const chats = await prisma.message.groupBy({
+//     by: ['receiverId'],
+//     where: {
+//       senderId: userId,
+//     },
+//     _max: {
+//       createdAt: true, // Get the most recent message date for each receiver
+//     },
+//     orderBy: {
+//       _max: {
+//         createdAt: 'desc',
+//       },
+//     },
+//   });
+
+//   // Step 3: Fetch last messages and receiver profiles
+//   const results = await Promise.all(
+//     chats.map(async chat => {
+//       // Fetch the last message for this conversation
+//       const lastMessage = await prisma.message.findFirst({
+//         where: {
+//           senderId: userId,
+//           receiverId: chat.receiverId,
+//         },
+//         orderBy: {
+//           createdAt: 'desc',
+//         },
+//         select: {
+//           content: true,
+//           createdAt: true,
+//         },
+//       });
+
+//       // Fetch receiver's profile
+//       const receiverProfile = await prisma.profile.findUnique({
+//         where: {
+//           userId: chat.receiverId,
+//         },
+//         select: {
+//           userId: true,
+//           username: true,
+//           profileImage: true,
+//         },
+//       });
+
+//       return {
+//         receiver: receiverProfile,
+//         lastMessage: lastMessage?.content || null,
+//         lastMessageDate: lastMessage?.createdAt || null,
+//       };
+//     }),
+//   );
+
+//   return results;
+// };
 const getMyChat = async (userId: string) => {
-  // Check if the user exists by verifying they have sent at least one message
-  const existingUser = await prisma.message.findFirst({
+  // Fetch conversations where the user is either sender or receiver
+  const result = await prisma.conversation.findMany({
     where: {
-      senderId: userId,
+      OR: [{ user1Id: userId }, { user2Id: userId }],
     },
-  });
-
-  if (!existingUser) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
-  }
-
-  // Fetch the receiver's profile and the last message for each receiver
-  const chats = await prisma.message.groupBy({
-    by: ['receiverId'], // Group messages by receiverId
-    where: {
-      senderId: userId,
-    },
-    _max: {
-      createdAt: true, // Get the most recent message date for each receiver
-    },
-    orderBy: {
-      _max: {
-        createdAt: 'desc',
+    include: {
+      messages: {
+        orderBy: { createdAt: 'desc' }, // Get the latest message first
+        take: 1, // Get only the latest message
       },
     },
   });
 
-  // Fetch full profile and last message for each receiver
-  const results = await Promise.all(
-    chats.map(async chat => {
-      const lastMessage = await prisma.message.findFirst({
-        where: {
-          senderId: userId,
-          receiverId: chat.receiverId,
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      });
+  // Map the result to get the last message, user details, and profile info
+  const chatList = await Promise.all(
+    result.map(async conversation => {
+      const lastMessage = conversation.messages[0]; // Get the last message from the messages array
+      const targetUserId =
+        conversation.user1Id === userId
+          ? conversation.user2Id
+          : conversation.user1Id; // Determine the other user
 
-      const receiverProfile = await prisma.profile.findUnique({
-        where: {
-          id: chat.receiverId,
-        },
+      // Fetch the profile details for the target user
+      const targetUserProfile = await prisma.profile.findUnique({
+        where: { userId: targetUserId },
         select: {
-          id: true,
-          username: true,
+          userId: true,
+          fullName: true,
           profileImage: true,
         },
       });
 
       return {
-        receiver: receiverProfile,
-        lastMessage: lastMessage?.content || null,
-        lastMessageDate: lastMessage?.createdAt || null,
+        user: targetUserProfile || null, // Return the user's profile details (or null if not found)
+        lastMessage: lastMessage ? lastMessage.content : null, // Last message content
+        lastMessageDate: lastMessage ? lastMessage.createdAt : null, // Last message timestamp
       };
     }),
   );
 
-  return results;
+  return chatList;
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 export const chatServices = {
   createConversationIntoDB,
