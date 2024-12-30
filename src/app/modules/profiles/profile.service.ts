@@ -143,6 +143,7 @@ const getMyProfile = async (userId: string) => {
       age: true,
       height: true,
       work: true,
+      customerId: true,
     },
   });
 

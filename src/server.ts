@@ -182,26 +182,24 @@ async function main() {
 
           // WebRTC signaling cases
           case 'offer': {
-            const { offer, senderId, roomId } = parsedData;
+            const { offer, receiverId, roomId } = parsedData;
 
-            // Log the received offer for debugging purposes
-            console.log('Received offer:', { offer, senderId, roomId });
 
             // Broadcast the offer to all users in the same room (excluding the sender)
             wss.clients.forEach((client: ExtendedWebSocket) => {
               // Check if the client is in the correct room and is ready to receive messages
               if (
                 client.roomId === roomId && // The client is in the same room
-                client.readyState === WebSocket.OPEN &&
-                client.userId !== senderId // Exclude the sender from receiving their own offer
+                client.readyState === 1 &&
+                client.userId !== receiverId // Exclude the sender from receiving their own offer
               ) {
                 console.log(`Sending offer to client in room ${roomId}`);
                 client.send(
                   JSON.stringify({
-                    type: 'receiveOffer',
+                    type: 'sendOffer',
                     offer,
                     roomId,
-                    senderId,
+                    receiverId,
                   }),
                 );
               }
@@ -210,15 +208,11 @@ async function main() {
           }
 
           case 'answer': {
-            const { answer, senderId, receiverId, roomId } = parsedData;
+            const { answer, receiverId, roomId } = parsedData;
 
             // Send the answer to the sender to complete the WebRTC connection
             wss.clients.forEach((client: ExtendedWebSocket) => {
-              if (
-                client.userId === senderId &&
-                client.roomId === roomId &&
-                client.readyState === WebSocket.OPEN
-              ) {
+              if (client.roomId === roomId && client.readyState === 1) {
                 client.send(
                   JSON.stringify({
                     type: 'receiveAnswer',
