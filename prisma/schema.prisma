@@ -11,23 +11,73 @@ datasource db {
 }
 
 model User {
-  id         String       @id @default(auto()) @map("_id") @db.ObjectId
-  email      String?      @unique
-  password   String?
-  role       UserRoleEnum @default(USER)
-  status     UserStatus   @default(ACTIVATE)
-  googleId   String?      @unique
-  facebookId String?      @unique
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  profile    Profile?
+  id               String          @id @default(auto()) @map("_id") @db.ObjectId
+  email            String?         @unique
+  password         String?
+  accountSetup     Boolean?        @default(false)
+  role             UserRoleEnum    @default(USER)
+  status           UserStatus      @default(ACTIVATE)
+  isVerified       veriedStatus    @default(NEW)
+  googleId         String?
+  facebookId       String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  fcpmToken        String?
+  profile          Profile?
+   // Relationships
+  conversations1 Conversation[] @relation("User1Conversations")
+  conversations2 Conversation[] @relation("User2Conversations")
+  messages       Message[]      @relation("UserMessages")
+  notifications    Notifications[] @relation("Notifications")
 
   @@map("users")
 }
 
-model Profile {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+model Conversation {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  user1Id   String    @db.ObjectId
+  user2Id   String    @db.ObjectId
+  messages  Message[] @relation("ConversationMessages")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
+  // Relationships
+  user1 User @relation("User1Conversations", fields: [user1Id], references: [id])
+  user2 User @relation("User2Conversations", fields: [user2Id], references: [id])
+
+  @@map("conversations")
+}
+
+model Message {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  conversationId String   @db.ObjectId
+  senderId       String   @db.ObjectId
+  receiverId     String   @db.ObjectId
+  content        String
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relationships
+  sender       User         @relation("UserMessages", fields: [senderId], references: [id])
+  conversation Conversation @relation("ConversationMessages", fields: [conversationId], references: [id])
+
+  @@map("messages")
+}
+
+
+model Otp {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  otp       Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("otps")
+}
+
+model Profile {
+  id           String          @id @default(auto()) @map("_id") @db.ObjectId
   fullName     String?
   username     String?
   phoneNumber  String?
@@ -35,6 +85,9 @@ model Profile {
   locationLat  String?
   locationLang String?
   country      String?
+  flag         String?
+  city         String?
+  age          String?
   gender       GenderStatus?
   dateOfBirth  String?
   height       String?
@@ -44,13 +97,92 @@ model Profile {
   language     String?
   work         String?
   gallery      Json[]
+  isVerified   veriedStatus    @default(NEW)
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
-
-  user   User  @relation(fields: [userId], references: [id])
-  userId String @unique @db.ObjectId
+  user         User?            @relation(fields: [userId], references: [id])
+  userId       String          @unique @db.ObjectId
+  customerId   String
 
   @@map("profiles")
+}
+
+model Favorite {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userID          String   @db.ObjectId
+  favoritedUserId String   @db.ObjectId
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("favorites")
+}
+
+model Notifications {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  receiverId String   @db.ObjectId
+  title      String
+  body       String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [receiverId], references: [id], name: "Notifications")
+}
+
+enum ChannelType {
+  PRIVATE
+  PUBLIC
+}
+
+model Plan {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  planName        String
+  duration        String
+  price           Float
+  productId       String // The Stripe product ID
+  description     String?
+  priceId         String // The Stripe price ID
+  paypalProductId String? // The PayPal product ID
+  paypalPlanId    String? // The PayPal plan ID
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("plans")
+}
+
+model Subscription {
+  id                   String    @id @default(auto()) @map("_id") @db.ObjectId
+  userID               String    @db.ObjectId
+  planID               String    @db.ObjectId // Reference to plan
+  stripeSubscriptionId String?
+  paypalSubscriptionId String?
+  status               String // "active", "canceled", etc.
+  startDate            DateTime  @default(now())
+  endDate              DateTime
+  renewedAt            DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@map("subscriptions")
+}
+
+model Payment {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userID         String   @db.ObjectId
+  totalAmount    Float
+  paymentMethod  String
+  cardName       String
+  securityCode   String
+  billingZipCode String // Changed DateTime to String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Date {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  personOneID String   @db.ObjectId
+  personTwoID String   @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 enum UserRoleEnum {
@@ -72,4 +204,11 @@ enum GenderStatus {
 enum RelationStatus {
   SINGLE
   MARRIED
+  INRELATIONSHIP
+  COMPLICATED
+}
+
+enum veriedStatus {
+  NEW
+  VERIFIED
 }

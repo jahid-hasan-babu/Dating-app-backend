@@ -3,29 +3,42 @@ import express, { Application, NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
 import globalErrorHandler from "./app/middlewares/globalErrorHandler";
 import router from "./app/routes";
+import path from 'path';
+import session from 'express-session';
+import passport from 'passport';
+
 
 const app: Application = express();
 app.use(
   cors({
-    origin: [
-      "http://localhost:3001",
-      "http://localhost:3000",
-    ],
+    origin: ['http://localhost:3001', 'http://localhost:3000'],
     credentials: true,
-  })
+  }),
 );
 
 //parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'default_secret_key',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: process.env.NODE_ENV === 'production' },
+  }),
+);
+app.use(passport.initialize());
+app.use(passport.session());
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
-app.get("/", (req: Request, res: Response) => {
+app.get('/', (req: Request, res: Response) => {
   res.send({
-    Message: "The server is running. . .",
+    Message: 'The server is running. . .',
   });
 });
 
-app.use("/api/v1", router);
+
+app.use('/api/v1', router);
 
 app.use(globalErrorHandler);
 

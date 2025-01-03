@@ -36,7 +36,7 @@
 
 ---
 
-- PostgreSQL (Database)
+- MongoDB (Database)
 - Prisma ORM
 - Express
 - Typescript
