@@ -21,16 +21,4 @@ export default {
         ? 'https://api.paypal.com'
         : 'https://api.sandbox.paypal.com',
   },
-  sosial_login: {
-    google: {
-      client_id: process.env.GOOGLE_CLIENT_ID,
-      client_secret: process.env.GOOGLE_CLIENT_SECRET,
-      redirect_uri: process.env.GOOGLE_CALLBACK_URL,
-    },
-    facebook: {
-      client_id: process.env.FACEBOOK_CLIENT_ID,
-      client_secret: process.env.FACEBOOK_CLIENT_SECRET,
-      redirect_uri: process.env.FACEBOOK_CALLBACK_URL,
-    },
-  },
 };
