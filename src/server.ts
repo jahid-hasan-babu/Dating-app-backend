@@ -233,7 +233,7 @@ async function main() {
               if (
                 client.userId === receiverId &&
                 client.roomId === roomId &&
-                client.readyState === WebSocket.OPEN
+                client.readyState === 1
               ) {
                 client.send(
                   JSON.stringify({
