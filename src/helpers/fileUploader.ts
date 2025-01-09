@@ -77,8 +77,8 @@ const uploadmultipeImage = upload.fields([
 ]);
 
 // Configure DigitalOcean Spaces
-const s3Client = new S3Client({
-  region: 'us-east-1', // Replace with your region if necessary
+export const s3Client = new S3Client({
+  region: 'nyc3', // Replace with your region if necessary
   endpoint: process.env.DO_SPACE_ENDPOINT,
   credentials: {
     accessKeyId: process.env.DO_SPACE_ACCESS_KEY || '',
@@ -122,7 +122,9 @@ const uploadToDigitalOcean = async (
     await removeFile(file.path);
 
     // Format the URL to include "https://"
-    const fileURL = `${process.env.DO_SPACE_ENDPOINT}/${process.env.DO_SPACE_BUCKET}/${Key}`;
+    // const fileURL = `${process.env.DO_SPACE_ENDPOINT}/${process.env.DO_SPACE_BUCKET}/${Key}`;
+
+    const fileURL = `https://${process.env.DO_SPACE_BUCKET}.nyc3.digitaloceanspaces.com/${Key}`;
     return {
       Location: fileURL,
       Bucket: process.env.DO_SPACE_BUCKET || '',
