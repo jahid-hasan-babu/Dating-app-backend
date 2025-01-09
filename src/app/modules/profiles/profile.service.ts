@@ -5,6 +5,7 @@ import { searchFilter } from '../../utils/searchFilter';
 import httpStatus from 'http-status';
 import AppError from '../../errors/AppError';
 import { fileUploader } from '../../../helpers/fileUploader';
+import { deleteFromS3ByUrl } from './../../../helpers/fileDeleteFromS3';
 
 // const getAllProfiles = async (userId: string, req: Request) => {
 //   const { search } = req.query;
@@ -188,52 +189,6 @@ const getGalleryImage = async (userId: string) => {
   return userInfo;
 };
 
-// const updateProfile = async (userId: string, payload: any, req: Request) => {
-//   const files = req.file as any;
-
-//   // console.log('Updating profile for userId:', userId);
-
-//   // Check if profile exists
-//   const profileInfo = await prisma.profile.findUnique({
-//     where: { userId: userId },
-//   });
-
-//   if (!profileInfo) {
-//     console.error(`Profile not found for userId: ${userId}`);
-//     throw new AppError(httpStatus.NOT_FOUND, 'Profile not found');
-//   }
-
-//   // Parse profileData
-//   const profileData = req.body?.bodyData
-//     ? (() => {
-//         try {
-//           return JSON.parse(req.body.bodyData);
-//         } catch (error) {
-//           throw new AppError(
-//             httpStatus.BAD_REQUEST,
-//             'Invalid JSON format in profile data',
-//           );
-//         }
-//       })()
-//     : {};
-
-//   // Handle profile image
-//   const profileImage = files?.originalname
-//     ? `${process.env.backend_base_url}/uploads/${files.originalname}`
-//     : profileInfo.profileImage;
-
-//   // Update profile
-//   const updatedProfile = await prisma.profile.update({
-//     where: { userId: userId },
-//     data: {
-//       ...profileData,
-//       profileImage,
-//     },
-//   });
-
-//   return updatedProfile;
-// };
-
 const updateProfile = async (userId: string, payload: any, req: Request) => {
   const files = req.file as any;
 
@@ -369,42 +324,6 @@ const updateProfileImage = async (userId: string, req: Request) => {
   }
 };
 
-// export const uploadGalleryImage = async (
-//   userId: string,
-//   files: Express.Multer.File[],
-// ) => {
-//   // Find the user profile
-//   const profileInfo = await prisma.profile.findUnique({
-//     where: { userId },
-//   });
-
-//   if (!profileInfo) {
-//     throw new AppError(httpStatus.NOT_FOUND, 'User not found');
-//   }
-
-//   // Generate the image URLs from uploaded files
-//   const imageUrls = files.map(
-//     file => `${process.env.backend_base_url}/uploads/${file.filename}`,
-//   );
-
-//   // Update the gallery field by appending new image URLs
-//   const updatedProfile = await prisma.profile.update({
-//     where: { userId },
-//     data: {
-//       gallery: {
-//         push: imageUrls,
-//       },
-//     },
-//     select: { gallery: true },
-//   });
-
-//   if (!updatedProfile) {
-//     throw new AppError(httpStatus.BAD_REQUEST, 'Gallery update failed');
-//   }
-
-//   return updatedProfile.gallery;
-// };
-
 export const uploadGalleryImage = async (
   userId: string,
   files: Express.Multer.File[],
@@ -412,6 +331,9 @@ export const uploadGalleryImage = async (
   // Step 1: Find the user profile
   const profileInfo = await prisma.profile.findUnique({
     where: { userId },
+    select: {
+      gallery: true,
+    },
   });
 
   if (!profileInfo) {
@@ -434,14 +356,29 @@ export const uploadGalleryImage = async (
       );
     }
   }
+  const allImageUrls = [...imageUrls, ...profileInfo.gallery];
+  const imageToUpdate = allImageUrls.slice(0, 5); // First 5 elements
+  const imageToDelete = allImageUrls.slice(5); // Rest of the elements
+
+  // // Step 4: Delete the old images from DigitalOcean Spaces
+  for (const imageUrl of imageToDelete) {
+    try {
+      await deleteFromS3ByUrl(imageUrl as string);
+      console.log('File deleted successfully:', imageUrl);
+    } catch (error) {
+      console.error('File delete failed:', error);
+      throw new AppError(
+        httpStatus.INTERNAL_SERVER_ERROR,
+        'Gallery update failed',
+      );
+    }
+  }
 
   // Step 4: Update the gallery field by appending new image URLs
   const updatedProfile = await prisma.profile.update({
     where: { userId },
     data: {
-      gallery: {
-        push: imageUrls, // Push the new image URLs to the gallery field
-      },
+      gallery: imageToUpdate as [], // Push the new image URLs to the gallery field
     },
     select: { gallery: true },
   });
@@ -453,6 +390,8 @@ export const uploadGalleryImage = async (
 
   return updatedProfile.gallery;
 };
+
+('https://ufg.nyc3.cdn.digitaloceanspaces.com/dating/1736424981159_3.png');
 
 
 const deleteProfile = async (userId: string) => {
