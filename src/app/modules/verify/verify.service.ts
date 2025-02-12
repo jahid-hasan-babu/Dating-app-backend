@@ -68,4 +68,15 @@ const verifyOtp = async (userID: string, email: string, otp: number) => {
   return;
 };
 
-export const VerifyServices = { createOtp, verifyOtp };
+const verifyUser = async (userID: string) => {
+  await prisma.profile.update({
+    where: {
+      userId: userID,
+    },
+    data: {
+      isVerified: 'VERIFIED',
+    },
+  });
+};
+
+export const VerifyServices = { createOtp, verifyOtp, verifyUser };

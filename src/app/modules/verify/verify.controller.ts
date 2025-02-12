@@ -27,7 +27,20 @@ const verifyOtp = catchAsync(
   },
 );
 
+
+const verifyUser = catchAsync(
+  async (req: Request & { user?: any }, res: Response) => {
+    const userID = req.user.id;
+    const result = await VerifyServices.verifyUser(userID);
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      message: 'Profile verified successfully',
+      data: result,
+    });
+  },
+);
 export const VerifyControllers = {
   createOtp,
   verifyOtp,
+  verifyUser,
 };
