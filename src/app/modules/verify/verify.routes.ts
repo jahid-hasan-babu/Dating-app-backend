@@ -19,4 +19,6 @@ router.post(
   VerifyControllers.verifyOtp,
 );
 
+router.put('/verify-user', auth(), VerifyControllers.verifyUser);
+
 export const VerifyRouters = router;

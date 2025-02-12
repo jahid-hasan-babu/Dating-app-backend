@@ -7,36 +7,8 @@ import AppError from '../../errors/AppError';
 import { fileUploader } from '../../../helpers/fileUploader';
 import { deleteFromS3ByUrl } from './../../../helpers/fileDeleteFromS3';
 
-// const getAllProfiles = async (userId: string, req: Request) => {
-//   const { search } = req.query;
-//   const searchFilters = search ? searchFilter(search as string) : {};
 
-//   const result = await prisma.profile.findMany({
-//     where: searchFilters,
-//     select: {
-//       id: true,
-//       userId: true,
-//       fullName: true,
-//       age: true,
-//       profileImage: true,
-//       isVerified: true,
-//       country: true,
-//       flag: true,
-//       city: true,
-//       user: {
-//         select: {
-//           status: true, // Include the status field from the user model
-//         },
-//       },
-//     },
-//   });
 
-//   // Handle cases where user is null
-//   return result.map(profile => ({
-//     ...profile,
-//     status: profile.user?.status || null,
-//   }));
-// };
 
 const getAllProfiles = async (userId: string, req: Request) => {
   const { search } = req.query;
@@ -391,7 +363,6 @@ export const uploadGalleryImage = async (
   return updatedProfile.gallery;
 };
 
-('https://ufg.nyc3.cdn.digitaloceanspaces.com/dating/1736424981159_3.png');
 
 
 const deleteProfile = async (userId: string) => {
