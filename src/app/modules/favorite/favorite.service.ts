@@ -1,4 +1,7 @@
+import { Prisma } from '@prisma/client';
 import prisma from '../../utils/prisma';
+import { Request } from 'express';
+import { searchFilter } from '../../utils/searchFilter';
 import httpStatus from 'http-status';
 import AppError from '../../errors/AppError';
 import { notificationServices } from '../notifications/notification.service';
@@ -104,25 +107,24 @@ const removeFavorite = async (userID: string, favoritedUserId: string) => {
 };
 
 const getProfilesWhoFavoritedMe = async (userID: string) => {
+  // Fetch all records from `favorite` where `favoritedUserId` matches the provided userID
   const favoritedByRecords = await prisma.favorite.findMany({
     where: {
-      favoritedUserId: userID,
+      favoritedUserId: userID, // Find users who favorited the current user
     },
     select: {
-      userID: true,
+      userID: true, // Get the list of user IDs who favorited this user
     },
   });
 
+  // Extract user IDs from the records
   const userIDs = favoritedByRecords.map(record => record.userID);
 
   if (userIDs.length === 0) {
-    return [];
+    return []; // If no one favorited, return an empty array
   }
 
   const profiles = await prisma.profile.findMany({
-    where: {
-      userId: { in: userIDs },
-    },
     select: {
       id: true,
       userId: true,
@@ -133,26 +135,34 @@ const getProfilesWhoFavoritedMe = async (userID: string) => {
       country: true,
       flag: true,
       city: true,
+      user: {
+        select: {
+          status: true, // Include the status field from the user model
+        },
+      },
     },
   });
 
+  // Get a list of user IDs that the current user has favorited (for checking isFavorite)
   const favoritedUsers = await prisma.favorite.findMany({
     where: {
-      userID: userID,
+      userID: userID, // The current user is the one who favorited
     },
     select: {
-      favoritedUserId: true,
+      favoritedUserId: true, // List of users the current user has favorited
     },
   });
 
+  // Extract the user IDs into a set for fast lookup
   const favoritedUserIdsSet = new Set(
     favoritedUsers.map(fav => fav.favoritedUserId),
   );
 
+  // Map through the profiles to add the `status` and `isFavorite` fields
   const profilesWithStatusAndFavorite = profiles.map(profile => ({
     ...profile,
 
-    isFavorite: favoritedUserIdsSet.has(profile.userId),
+    isFavorite: favoritedUserIdsSet.has(profile.userId), // Check if the current user has favorited this profile
   }));
 
   return { profiles: profilesWithStatusAndFavorite };
@@ -176,6 +186,7 @@ const favoriteListCount = async (userID: string) => {
 };
 
 const getMyFavoriteList = async (userID: string) => {
+  // Step 1: Fetch the list of favorited users for the given userID
   const favoriteRecords = await prisma.favorite.findMany({
     where: {
       userID,
@@ -185,18 +196,17 @@ const getMyFavoriteList = async (userID: string) => {
     },
   });
 
+  // Step 2: Extract the favorited user IDs
   const favoritedUserIds = favoriteRecords.map(
     record => record.favoritedUserId,
   );
 
+  // If no users are favorited, return an empty array
   if (favoritedUserIds.length === 0) {
     return [];
   }
 
   const profiles = await prisma.profile.findMany({
-    where: {
-      userId: { in: favoritedUserIds },
-    },
     select: {
       id: true,
       userId: true,
@@ -207,6 +217,11 @@ const getMyFavoriteList = async (userID: string) => {
       country: true,
       flag: true,
       city: true,
+      user: {
+        select: {
+          status: true, // Include the status field from the user model
+        },
+      },
     },
   });
 
