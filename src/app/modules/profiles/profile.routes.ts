@@ -1,7 +1,5 @@
 import express from 'express';
 import { ProfileControllers } from './profile.controller';
-import validateRequest from '../../middlewares/validateRequest';
-import { ProfileValidation } from './profile.validation';
 import { fileUploader } from '../../../helpers/fileUploader';
 import auth from '../../middlewares/auth';
 const router = express.Router();

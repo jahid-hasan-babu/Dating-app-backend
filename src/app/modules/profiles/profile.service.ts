@@ -26,27 +26,33 @@ const getAllProfiles = async (userId: string, req: Request) => {
   const favoritedUserIds = new Set(
     favoriteUsers.map(fav => fav.favoritedUserId),
   );
-
-  // Fetch profiles with additional isFavorite field
-  const result = await prisma.profile.findMany({
-    where: searchFilters,
-    select: {
-      id: true,
-      userId: true,
-      fullName: true,
-      age: true,
-      profileImage: true,
-      isVerified: true,
-      country: true,
-      flag: true,
-      city: true,
-      user: {
-        select: {
-          status: true, // Include the status field from the user model
-        },
+console.log(userId);
+// Fetch profiles with additional isFavorite field
+const result = await prisma.profile.findMany({
+  where: {
+    ...searchFilters,
+    userId: {
+      not: userId,
+    },
+  },
+  select: {
+    id: true,
+    userId: true,
+    fullName: true,
+    age: true,
+    profileImage: true,
+    isVerified: true,
+    country: true,
+    flag: true,
+    city: true,
+    user: {
+      select: {
+        status: true, // Include the status field from the user model
       },
     },
-  });
+  },
+});
+
 
   // Map through the results to add the isFavorite field
   return result.map(profile => ({
