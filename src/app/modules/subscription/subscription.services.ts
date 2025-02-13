@@ -1,6 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import httpStatus from 'http-status';
-import AppError from '../../errors/AppError';
+
 
 const prisma = new PrismaClient();
 
@@ -12,7 +11,8 @@ const getMySubscription = async (userId: string) => {
       status: { in: ['active', 'APPROVAL_PENDING'] },
     },
   });
-  return result;
+  if (!result) return false;
+  return true;
 };
 
 export const subscriptionServices = {
