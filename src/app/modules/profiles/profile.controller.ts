@@ -5,11 +5,18 @@ import { ProfileServices } from './profile.service';
 import { Request, Response } from 'express';
 
 import AppError from '../../errors/AppError';
+import pickValidFields from '../../utils/pickValidFields';
 
 const getAllProfiles = catchAsync(
   async (req: Request & { user?: any }, res: Response) => {
     const userId = req.user.id;
-    const result = await ProfileServices.getAllProfiles(userId, req);
+    const options = pickValidFields(req.query, [
+      'limit',
+      'page',
+      'user',
+      'search',
+    ]);
+    const result = await ProfileServices.getAllProfiles(userId, options);
     sendResponse(res, {
       statusCode: httpStatus.OK,
       message: 'Profile Retrieve successfully',

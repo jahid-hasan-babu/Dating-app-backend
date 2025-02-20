@@ -6,19 +6,21 @@ import httpStatus from 'http-status';
 import AppError from '../../errors/AppError';
 import { fileUploader } from '../../../helpers/fileUploader';
 import { deleteFromS3ByUrl } from './../../../helpers/fileDeleteFromS3';
+import { IPaginationOptions } from '../../interface/pagination.type';
+import { paginationHelper } from '../../../helpers/paginationHelpers';
 
+const getAllProfiles = async (
+  userId: string,
+  options: IPaginationOptions & { search?: string },
+) => {
+  const { page, limit, skip } = paginationHelper.calculatePagination(options);
+  const { search } = options;
 
-
-
-const getAllProfiles = async (userId: string, req: Request) => {
-  const { search } = req.query;
   const searchFilters = search ? searchFilter(search as string) : {};
 
   // Fetch the favorited user IDs for the given userId
   const favoriteUsers = await prisma.favorite.findMany({
-    where: {
-      userID: userId, // assuming userId is the correct property name
-    },
+    where: { userID: userId },
     select: { favoritedUserId: true },
   });
 
@@ -27,18 +29,24 @@ const getAllProfiles = async (userId: string, req: Request) => {
     favoriteUsers.map(fav => fav.favoritedUserId),
   );
 
-  // Fetch profiles with additional isFavorite field
+  // Fetch total count for pagination
+  const total = await prisma.profile.count({
+    where: {
+      ...searchFilters,
+      userId: { not: userId },
+      user: { NOT: [{ accountSetup: false }] },
+    },
+  });
+
+  // Fetch profiles with pagination
   const result = await prisma.profile.findMany({
     where: {
       ...searchFilters,
-
-      userId: {
-        not: userId,
-      },
-      user: {
-        NOT: [{ accountSetup: false }],
-      },
+      userId: { not: userId },
+      user: { NOT: [{ accountSetup: false }] },
     },
+    skip, // Pagination should be here
+    take: limit, // Pagination should be here
     select: {
       id: true,
       userId: true,
@@ -50,9 +58,7 @@ const getAllProfiles = async (userId: string, req: Request) => {
       flag: true,
       city: true,
       user: {
-        select: {
-          status: true,
-        },
+        select: { status: true },
       },
     },
   });
@@ -61,9 +67,10 @@ const getAllProfiles = async (userId: string, req: Request) => {
   return result.map(profile => ({
     ...profile,
     status: profile.user?.status || null,
-    isFavorite: favoritedUserIds.has(profile.userId), // Check if userId is in the favorited list
+    isFavorite: favoritedUserIds.has(profile.userId),
   }));
 };
+
 
 const getSingleProfile = async (userId: string) => {
   const result = await prisma.profile.findUnique({
