@@ -345,10 +345,9 @@ export const uploadGalleryImage = async (
     }
   }
   const allImageUrls = [...imageUrls, ...profileInfo.gallery];
-  const imageToUpdate = allImageUrls.slice(0, 5); // First 5 elements
-  const imageToDelete = allImageUrls.slice(5); // Rest of the elements
+  const imageToUpdate = allImageUrls.slice(0, 5);
+  const imageToDelete = allImageUrls.slice(5); 
 
-  // // Step 4: Delete the old images from DigitalOcean Spaces
   for (const imageUrl of imageToDelete) {
     try {
       await deleteFromS3ByUrl(imageUrl as string);
