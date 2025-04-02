@@ -59,7 +59,7 @@ Ensure you have the following installed:
 
 ## Folder Structure
 ```
-📂 sdgconsult-server
+📂 dating-app-server
 ├── 📂 src
 │   ├── 📂 controllers
 │   ├── 📂 models

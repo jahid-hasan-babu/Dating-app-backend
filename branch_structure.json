@@ -1,0 +1,15 @@
+{
+  "default_branch": "main",
+  "branches": [
+    "jahid",
+    "main"
+  ],
+  "parent": {
+    "jahid": "main",
+    "main": null
+  },
+  "order": [
+    "main",
+    "jahid"
+  ]
+}
